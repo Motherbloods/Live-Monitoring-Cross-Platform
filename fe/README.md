@@ -63,3 +63,7 @@ Isi `VITE_API_URL` dengan alamat server (default `http://localhost:4000`). Jika 
 `npm run check:integration` menjalankan server sementara di port 4010 lalu menguji seluruh aksi frontend terhadap server asli. Perintah ini membutuhkan `npm install` di folder `server`.
 
 Yang masih mock walau server aktif: tombol Test notification, aksi Cancel/Retry rekaman, dan daftar rekaman (server belum menyimpan rekaman).
+
+## Login
+
+Di mode server, aplikasi meminta login admin. Atur kata sandi di `server/.env` (lihat README server). Tombol keluar ada di topbar. Jika sesi berakhir, aplikasi kembali ke halaman login.
