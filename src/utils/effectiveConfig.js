@@ -66,3 +66,21 @@ export const getGlobalStatus = (config, platformRuntime) => {
   const healthy = ids.filter((id) => platformRuntime[id]?.status === 'online')
   return healthy.length === PLATFORM_IDS.length ? 'running' : 'partial'
 }
+
+export const getPlatformSummary = (platformId, accounts, runtime, platformRuntime, config) => {
+  const own = accounts.filter((a) => a.platformId === platformId)
+  const statuses = own.map((a) => ({ a, st: getDisplayStatus(a, runtime, platformRuntime, config) }))
+  return {
+    total: own.length,
+    enabled: own.filter((a) => a.monitoringEnabled).length,
+    live: statuses.filter((x) => x.st === 'live').length,
+    unable: statuses.filter((x) => x.a.monitoringEnabled && (x.st === 'unknown' || x.st === 'error')).length,
+    eligible: own.filter((a) => getEligibility(a, config).eligible).length
+  }
+}
+
+export const getServiceStatus = (platformId, platformRuntime, config) => {
+  if (!config.platforms[platformId].serviceEnabled) return 'svcDisabled'
+  const st = platformRuntime[platformId]?.status
+  return st === 'offline' ? 'svcOffline' : st
+}
