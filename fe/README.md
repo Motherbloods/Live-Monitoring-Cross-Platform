@@ -48,3 +48,18 @@ scripts/        consistency-check.mjs
 | riwayat live (saat ini dibaca dari store) | `GET /api/history` |
 
 Saat backend tersedia, server menjadi sumber kebenaran konfigurasi dan status runtime. localStorage hanya cadangan sementara. Token Telegram dan kredensial lain harus tetap di sisi server, dan validasi serta otorisasi wajib dilakukan di backend.
+
+## Mode server
+
+Tanpa konfigurasi, aplikasi berjalan dengan data dummy (mock mode). Untuk memakai backend:
+
+```
+cp .env.example .env
+npm run dev
+```
+
+Isi `VITE_API_URL` dengan alamat server (default `http://localhost:4000`). Jika server tidak terjangkau, banner muncul dan data terakhir tetap ditampilkan.
+
+`npm run check:integration` menjalankan server sementara di port 4010 lalu menguji seluruh aksi frontend terhadap server asli. Perintah ini membutuhkan `npm install` di folder `server`.
+
+Yang masih mock walau server aktif: tombol Test notification, aksi Cancel/Retry rekaman, dan daftar rekaman (server belum menyimpan rekaman).
