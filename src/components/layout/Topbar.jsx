@@ -1,5 +1,5 @@
 import { Bell, Menu, Pause, Play, RefreshCw, Search } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/appStore.js'
 import { clock } from '../../utils/formatters.js'
 import { getGlobalStatus } from '../../utils/effectiveConfig.js'
@@ -11,6 +11,12 @@ const LABEL = { running: 'Running', partial: 'Partially running', stopped: 'Stop
 export default function Topbar({ onMenu }) {
   const { config, platformRuntime, lastRefresh, refreshDashboard, toggleGlobalMonitoring } = useAppStore()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const submitSearch = (e) => {
+    e.preventDefault()
+    const q = new FormData(e.currentTarget).get('q').toString().trim()
+    if (q) navigate(`/accounts?q=${encodeURIComponent(q)}`)
+  }
   const status = getGlobalStatus(config, platformRuntime)
   const enabled = PLATFORM_IDS.filter((id) => config.platforms[id].serviceEnabled).length
   const title = TITLES[pathname] || 'Platforms'
@@ -22,10 +28,10 @@ export default function Topbar({ onMenu }) {
       </button>
       <h2 className="topbar-title">{title}</h2>
 
-      <label className="search">
+      <form className="search" onSubmit={submitSearch} role="search">
         <Search size={15} aria-hidden />
-        <input type="search" placeholder="Cari akun atau platform" aria-label="Cari" />
-      </label>
+        <input type="search" name="q" placeholder="Cari akun lalu tekan Enter" aria-label="Cari akun" />
+      </form>
 
       <div className="topbar-right">
         <div className={`global-pill tone-${status}`}>
@@ -45,9 +51,9 @@ export default function Topbar({ onMenu }) {
         <button className="icon-btn" onClick={refreshDashboard} aria-label="Refresh tampilan">
           <RefreshCw size={16} />
         </button>
-        <button className="icon-btn" aria-label="Notifikasi">
+        <Link className="icon-btn" to="/notifications" aria-label="Pengaturan notifikasi">
           <Bell size={16} />
-        </button>
+        </Link>
         <span className="avatar" aria-hidden>
           AD
         </span>

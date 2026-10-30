@@ -17,7 +17,7 @@ const time = (iso) => (iso ? new Date(iso).getTime() : 0)
 export default function LiveAccounts() {
   const { accounts, runtime, platformRuntime, config, setAccountMonitoring, checkAccount, deleteAccount } = useAppStore()
   const [params, setParams] = useSearchParams()
-  const [q, setQ] = useState('')
+  const [q, setQ] = useState(params.get('q') || '')
   const [platform, setPlatform] = useState(params.get('platform') || 'all')
   const [status, setStatus] = useState('all')
   const [monitoring, setMonitoring] = useState('all')
@@ -29,7 +29,7 @@ export default function LiveAccounts() {
   const [busyDelete, setBusyDelete] = useState(false)
 
   useEffect(() => {
-    if (params.get('new')) setParams({}, { replace: true })
+    if (params.get('new') || params.get('q')) setParams({}, { replace: true })
   }, [])
 
   const rows = useMemo(() => {
