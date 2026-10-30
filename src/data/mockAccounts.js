@@ -39,8 +39,10 @@ export const mockAccounts = rows.map((r, i) => ({
   monitoringEnabled: r[3] !== 'disabled',
   useCustomCheckInterval: i === 0 || i === 10,
   customCheckIntervalSeconds: i === 0 ? 15 : i === 10 ? 20 : null,
-  autoRecording: i % 4 === 0,
-  notifyEnabled: true,
+  autoRecording: i % 4 === 0 ? true : null,
+  notifyEnabled: null,
+  notifyOnStart: null,
+  notifyOnEnd: null,
   notes: ''
 }))
 
