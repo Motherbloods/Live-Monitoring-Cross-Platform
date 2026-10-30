@@ -1,6 +1,9 @@
 import { http } from './client.js'
 
 export const serverApi = {
+  me: () => http('GET', '/auth/me'),
+  login: (username, password) => http('POST', '/auth/login', { username, password }),
+  logout: () => http('POST', '/auth/logout'),
   snapshot: async () => {
     const [accounts, platforms, config, history, recordings, logs] = await Promise.all([
       http('GET', '/accounts'),

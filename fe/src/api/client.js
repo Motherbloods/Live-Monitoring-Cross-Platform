@@ -14,18 +14,26 @@ export class ApiError extends Error {
   }
 }
 
+let unauthorizedHandler = () => {}
+
+export const setUnauthorizedHandler = (fn) => {
+  unauthorizedHandler = fn
+}
+
 export const http = async (method, path, body) => {
   let response
   try {
     response = await fetch(`${API_URL}/api${path}`, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      credentials: 'include',
+      headers: { 'X-Requested-With': 'live-monitor', ...(body ? { 'Content-Type': 'application/json' } : {}) },
       body: body ? JSON.stringify(body) : undefined
     })
   } catch {
     throw new ApiError('Server tidak dapat dihubungi.', 'NETWORK', 0)
   }
   const data = await response.json().catch(() => null)
+  if (response.status === 401 && !path.startsWith('/auth/')) unauthorizedHandler()
   if (!response.ok) throw new ApiError(data?.error?.message || `Permintaan gagal (${response.status}).`, data?.error?.code || 'HTTP_ERROR', response.status)
   return data
 }
