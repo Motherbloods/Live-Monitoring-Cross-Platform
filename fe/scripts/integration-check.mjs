@@ -4,13 +4,30 @@ import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
 
+const { hashPassword } = await import('../../server/src/utils/password.js')
+
 const port = 4010
 const dbFile = path.join(os.tmpdir(), `lm-integration-${Date.now()}.json`)
 globalThis.__API_URL__ = `http://localhost:${port}`
 const storage = new Map()
 globalThis.localStorage = { getItem: (k) => (storage.has(k) ? storage.get(k) : null), setItem: (k, v) => storage.set(k, String(v)), removeItem: (k) => storage.delete(k) }
 
-const server = spawn('node', ['src/index.js'], { cwd: path.resolve('..', 'server'), env: { ...process.env, PORT: String(port), DB_FILE: dbFile }, stdio: 'ignore' })
+const PASSWORD = 'kata-sandi-uji-123'
+const jar = new Map()
+const realFetch = globalThis.fetch
+globalThis.fetch = async (url, options = {}) => {
+  const cookie = [...jar].map(([k, v]) => `${k}=${v}`).join('; ')
+  const response = await realFetch(url, { ...options, headers: { ...options.headers, ...(cookie ? { Cookie: cookie } : {}) } })
+  for (const line of response.headers.getSetCookie?.() || []) {
+    const [pair, ...attrs] = line.split(';')
+    const [name, value] = pair.split('=')
+    if (attrs.some((a) => a.trim().toLowerCase() === 'max-age=0') || !value) jar.delete(name)
+    else jar.set(name, value)
+  }
+  return response
+}
+
+const server = spawn('node', ['src/index.js'], { cwd: path.resolve('..', 'server'), env: { ...process.env, PORT: String(port), DB_FILE: dbFile, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD_HASH: await hashPassword(PASSWORD) }, stdio: 'ignore' })
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 for (let i = 0; i < 30; i += 1) {
   try {
@@ -33,8 +50,30 @@ const test = async (name, fn) => {
 const S = () => useAppStore.getState()
 const form = (patch) => ({ platformId: 'twitch', profileUrl: '', username: 'uji_integrasi', displayName: 'Uji Integrasi', monitoringEnabled: true, useCustomCheckInterval: false, customCheckIntervalSeconds: '', autoRecording: null, notifyEnabled: null, notifyOnStart: null, notifyOnEnd: null, notes: '', ...patch })
 
+await test('tanpa login, sesi dinyatakan anonim dan data tidak dimuat', async () => {
+  assert.equal(S().auth, 'checking')
+  await S().checkSession()
+  assert.equal(S().auth, 'anonymous')
+  await S().hydrate()
+  assert.equal(S().accounts.length, 0)
+  assert.equal(S().auth, 'anonymous')
+})
+
+await test('kata sandi salah ditolak dan sesi tetap anonim', async () => {
+  const result = await S().login('admin', 'salah-salah-1')
+  assert.equal(result.ok, false)
+  assert.equal(S().auth, 'anonymous')
+})
+
+await test('login benar membuat sesi dan cookie tersimpan', async () => {
+  const result = await S().login('admin', PASSWORD)
+  assert.equal(result.ok, true)
+  assert.equal(S().auth, 'authenticated')
+  assert.equal(S().user.username, 'admin')
+  assert.ok(jar.has('lm_session'))
+})
+
 await test('hydrate memuat akun, runtime, platform, dan konfigurasi dari server', async () => {
-  assert.equal(S().connection, 'connecting')
   await S().hydrate()
   assert.equal(S().connection, 'online')
   assert.equal(S().accounts.length, 10)
@@ -119,6 +158,29 @@ await test('hapus akun menjaga riwayat live', async () => {
 await test('log dan aktivitas berasal dari server', () => {
   assert.ok(S().logs.length > 0)
   assert.ok(S().activities.length > 0)
+})
+
+await test('logout menghapus data dari memori dan menolak akses berikutnya', async () => {
+  const oldCookie = jar.get('lm_session')
+  await S().logout()
+  assert.equal(S().auth, 'anonymous')
+  assert.equal(S().accounts.length, 0)
+  assert.equal(jar.has('lm_session'), false)
+  jar.set('lm_session', oldCookie)
+  const response = await fetch(`${globalThis.__API_URL__}/api/accounts`)
+  assert.equal(response.status, 401)
+  jar.delete('lm_session')
+  assert.equal((await S().login('admin', PASSWORD)).ok, true)
+  await S().hydrate()
+})
+
+await test('sesi yang kedaluwarsa di server memicu kembali ke anonim', async () => {
+  jar.set('lm_session', 'token-palsu')
+  await S().hydrate()
+  assert.equal(S().auth, 'anonymous')
+  jar.delete('lm_session')
+  assert.equal((await S().login('admin', PASSWORD)).ok, true)
+  await S().hydrate()
 })
 
 await test('server mati membuat koneksi offline tanpa menghapus data terakhir', async () => {
