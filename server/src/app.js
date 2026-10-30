@@ -4,7 +4,7 @@ import accounts from './routes/accounts.js'
 import platforms from './routes/platforms.js'
 import config from './routes/config.js'
 import monitoring from './routes/monitoring.js'
-import { history, notifications, recordings } from './routes/data.js'
+import { history, logs, notifications, recordings } from './routes/data.js'
 import { HttpError } from './utils/http.js'
 
 export const createApp = () => {
@@ -20,6 +20,7 @@ export const createApp = () => {
   app.use('/api/config', config)
   app.use('/api/monitoring', monitoring)
   app.use('/api/history', history)
+  app.use('/api/logs', logs)
   app.use('/api/recordings', recordings)
   app.use('/api/notifications', notifications)
 

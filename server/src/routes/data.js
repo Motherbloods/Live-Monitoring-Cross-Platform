@@ -42,3 +42,11 @@ notifications.patch('/settings', (req, res) => {
   persist()
   res.json(settings())
 })
+
+export const logs = Router()
+
+logs.get('/', (req, res) => {
+  const { platform, level } = req.query
+  const wanted = level ? String(level).toUpperCase() : null
+  res.json({ logs: getState().logs.filter((l) => (!platform || l.platformId === platform) && (!wanted || l.level === wanted)) })
+})
