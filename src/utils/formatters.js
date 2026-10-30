@@ -25,3 +25,12 @@ export const clock = (iso) => new Date(iso).toLocaleTimeString('id-ID', { hour: 
 export const interval = (sec) => (sec >= 120 && sec % 60 === 0 ? `${sec / 60} mnt` : `${sec} dtk`)
 
 export const compact = (n) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(n)
+
+export const minutes = (n) => {
+  const h = Math.floor(n / 60)
+  const m = Math.round(n % 60)
+  return h ? `${h}j ${m}m` : `${m}m`
+}
+
+export const dateTime = (iso) =>
+  new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: activeTimezone })

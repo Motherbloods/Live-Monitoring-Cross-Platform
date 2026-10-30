@@ -84,3 +84,28 @@ export const getServiceStatus = (platformId, platformRuntime, config) => {
   const st = platformRuntime[platformId]?.status
   return st === 'offline' ? 'svcOffline' : st
 }
+
+export const resolvePlatformNotifications = (platformId, config) => ({
+  ...config.global.notificationDefaults,
+  ...config.platforms[platformId].notificationOverrides
+})
+
+export const resolvePlatformRecording = (platformId, config) => ({
+  ...config.global.recordingDefaults,
+  ...config.platforms[platformId].recordingOverrides
+})
+
+export const resolveAccountNotifications = (account, config) => {
+  const base = resolvePlatformNotifications(account.platformId, config)
+  return {
+    ...base,
+    enabled: account.notifyEnabled ?? base.enabled,
+    liveStart: account.notifyOnStart ?? base.liveStart,
+    liveEnd: account.notifyOnEnd ?? base.liveEnd
+  }
+}
+
+export const resolveAccountRecording = (account, config) => ({
+  ...resolvePlatformRecording(account.platformId, config),
+  autoRecording: account.autoRecording ?? resolvePlatformRecording(account.platformId, config).autoRecording
+})
