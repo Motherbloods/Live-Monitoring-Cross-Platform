@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink, Plus, RefreshCw, ScanSearch, Tv } from 'lucide-react'
 import { useAppStore } from '../store/appStore.js'
 import { PLATFORMS } from '../config/defaults.js'
-import { computeStats, getEligibility, getPlatformSummary, getGlobalStatus, resolveEffectiveConfig } from '../utils/effectiveConfig.js'
+import { computeStats, getEligibility, getPlatformSummary, getGlobalStatus, getServiceStatus } from '../utils/effectiveConfig.js'
 import { ago, clock, compact, duration, interval } from '../utils/formatters.js'
 import StatusBadge from '../components/common/StatusBadge.jsx'
 
@@ -61,6 +61,7 @@ export default function Overview() {
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('recent')
   const [confirming, setConfirming] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   const stats = computeStats(accounts, runtime, platformRuntime, config)
   const global = getGlobalStatus(config, platformRuntime)
@@ -166,8 +167,7 @@ export default function Overview() {
               const rt = platformRuntime[p.id]
               const own = accounts.filter((a) => a.platformId === p.id)
               const { live, unable } = getPlatformSummary(p.id, accounts, runtime, platformRuntime, config)
-              const status = !pc.serviceEnabled ? 'svcDisabled' : rt.status === 'offline' ? 'svcOffline' : rt.status
-              const sample = own[0] ? resolveEffectiveConfig(own[0], config).checkIntervalSeconds : config.global.defaultCheckIntervalSeconds
+              const status = getServiceStatus(p.id, platformRuntime, config)
               const platformInterval = pc.checkIntervalSeconds || config.global.defaultCheckIntervalSeconds
               return (
                 <li key={p.id} style={{ '--accent': p.color }} className={!pc.serviceEnabled ? 'is-dim' : ''}>
@@ -185,7 +185,7 @@ export default function Overview() {
                       {rt.lastError && <span className="svc-err"> · {rt.lastError}</span>}
                     </p>
                   </div>
-                  <Link className="btn btn-small" to={`/platforms/${p.id}`} data-sample={sample}>
+                  <Link className="btn btn-small" to={`/platforms/${p.id}`}>
                     View details
                   </Link>
                 </li>
@@ -198,10 +198,10 @@ export default function Overview() {
           <section className="section" aria-labelledby="act-h">
             <div className="section-head">
               <h3 id="act-h">Recent activity</h3>
-              <button className="link-btn" disabled>View all activity</button>
+              <button className="link-btn" onClick={() => setShowAll((v) => !v)}>{showAll ? 'Tampilkan lebih sedikit' : 'View all activity'}</button>
             </div>
             <ol className="timeline">
-              {activities.slice(0, 7).map((a) => (
+              {activities.slice(0, showAll ? 40 : 7).map((a) => (
                 <li key={a.id} className={`lvl-${a.level}`}>
                   <span className="tl-dot" />
                   <div>
