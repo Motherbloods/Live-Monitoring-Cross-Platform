@@ -1,3 +1,4 @@
+import { setUnauthorizedHandler } from '../api/client.js'
 import { serverApi } from '../api/serverApi.js'
 import { validateConfig } from '../config/configurationManager.js'
 import { setTimezone } from '../utils/formatters.js'
@@ -19,7 +20,14 @@ const accountBody = (form) => ({
   notes: form.notes
 })
 
+const WAITING = Object.fromEntries(['tiktok', 'shopee', 'youtube', 'instagram', 'twitch'].map((id) => [id, { status: 'starting', lastSuccess: null, lastError: null, retryCount: 0 }]))
+
 export const createHttpActions = (set, get) => {
+  setUnauthorizedHandler(() => {
+    if (get().auth === 'authenticated') get().pushToast('Sesi berakhir. Silakan masuk lagi.', 'warn')
+    set({ auth: 'anonymous', user: null, ready: false })
+  })
+
   const attempt = async (fn, successMessage, tone = 'ok') => {
     try {
       const result = await fn()
@@ -48,6 +56,33 @@ export const createHttpActions = (set, get) => {
   }
 
   return {
+    checkSession: async () => {
+      try {
+        const { user } = await serverApi.me()
+        set({ auth: 'authenticated', user })
+      } catch (error) {
+        set({ auth: 'anonymous', user: null, connection: error.status === 0 ? 'offline' : get().connection })
+      }
+    },
+
+    login: async (username, password) => {
+      try {
+        const { user } = await serverApi.login(username, password)
+        set({ auth: 'authenticated', user, ready: false, connection: 'connecting' })
+        return { ok: true }
+      } catch (error) {
+        if (error.status === 0) set({ connection: 'offline' })
+        return { ok: false, message: error.message, code: error.code }
+      }
+    },
+
+    logout: async () => {
+      try {
+        await serverApi.logout()
+      } catch {}
+      set({ auth: 'anonymous', user: null, accounts: [], runtime: {}, platformRuntime: WAITING, history: [], recordings: [], logs: [], activities: [], ready: false, connection: 'connecting' })
+    },
+
     hydrate: async () => {
       try {
         const snap = await serverApi.snapshot()
@@ -68,7 +103,8 @@ export const createHttpActions = (set, get) => {
           ready: true
         }))
         setTimezone(snap.config.global.timezone)
-      } catch {
+      } catch (error) {
+        if (error.status === 401) return
         const was = get().connection
         set({ connection: 'offline', ready: true })
         if (was !== 'offline') get().pushToast('Server tidak dapat dihubungi. Data yang tampil bisa kedaluwarsa.', 'warn')
