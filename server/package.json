@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "hash-password": "node scripts/hash-password.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

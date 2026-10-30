@@ -1,8 +1,10 @@
 import 'dotenv/config'
 import { createApp } from './app.js'
+import { assertAuthConfig } from './services/auth.js'
 import { loadState, persistNow } from './store/db.js'
 import { startScheduler } from './services/monitor.js'
 
+assertAuthConfig()
 loadState()
 startScheduler()
 
