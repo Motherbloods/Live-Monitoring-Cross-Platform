@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { API_MODE } from '../api/client.js'
+import { createHttpActions } from './httpActions.js'
 import { accountsApi } from '../api/accountsApi.js'
 import { monitoringApi } from '../api/monitoringApi.js'
 import { notificationsApi } from '../api/notificationsApi.js'
@@ -13,6 +15,8 @@ import { mockLogs } from '../data/mockLogs.js'
 import { mockAccounts, mockActivities, mockPlatformRuntime, mockRuntime } from '../data/mockAccounts.js'
 import { getEligibility } from '../utils/effectiveConfig.js'
 
+const remote = API_MODE === 'http'
+const waiting = Object.fromEntries(['tiktok', 'shopee', 'youtube', 'instagram', 'twitch'].map((id) => [id, { status: 'starting', lastSuccess: null, lastError: null, retryCount: 0 }]))
 const initial = loadConfig()
 setTimezone(initial.config.global.timezone)
 let toastId = 0
@@ -22,13 +26,15 @@ export const useAppStore = create((set, get) => ({
   draft: initial.config,
   savedAt: initial.savedAt,
   recovered: initial.recovered,
-  accounts: mockAccounts,
-  runtime: mockRuntime,
-  platformRuntime: mockPlatformRuntime,
-  activities: mockActivities,
-  logs: mockLogs,
-  history: mockHistory,
-  recordings: mockRecordings,
+  accounts: remote ? [] : mockAccounts,
+  runtime: remote ? {} : mockRuntime,
+  platformRuntime: remote ? waiting : mockPlatformRuntime,
+  activities: remote ? [] : mockActivities,
+  logs: remote ? [] : mockLogs,
+  history: remote ? [] : mockHistory,
+  recordings: remote ? [] : mockRecordings,
+  connection: remote ? 'connecting' : 'mock',
+  ready: !remote,
   lastRefresh: new Date().toISOString(),
   toasts: [],
   busy: { checkAll: false },
@@ -259,5 +265,7 @@ export const useAppStore = create((set, get) => ({
       failed ? 'warn' : 'ok'
     )
     return summary
-  }
+  },
+
+  ...(remote ? createHttpActions(set, get) : {})
 }))
