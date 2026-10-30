@@ -96,9 +96,9 @@ export default function Overview() {
           <p>Monitor your favorite creators across every platform.</p>
         </div>
         <div className="actions">
-          <button className="btn" disabled>
+          <Link className="btn" to="/accounts?new=1">
             <Plus size={15} aria-hidden /> Add account
-          </button>
+          </Link>
           <button className="btn" onClick={refreshDashboard}>
             <RefreshCw size={15} aria-hidden /> Refresh dashboard
           </button>
