@@ -27,7 +27,7 @@ export default function Sidebar({ collapsed, onToggle, open, onNavigate }) {
         <span className="brand-mark">
           <Radio size={16} aria-hidden />
         </span>
-        <span className="brand-name">Live Monitor</span>
+        <span className="brand-name">{config.global.appName}</span>
       </div>
 
       <nav aria-label="Navigasi utama">

@@ -12,6 +12,11 @@ export default function DashboardLayout() {
   const seconds = useAppStore((s) => s.config.global.dashboardRefreshIntervalSeconds)
   const compactMode = useAppStore((s) => s.config.global.compactMode)
   const { pathname } = useLocation()
+  const appName = useAppStore((s) => s.config.global.appName)
+
+  useEffect(() => {
+    document.title = appName
+  }, [appName])
 
   useEffect(() => {
     if (!seconds) return undefined
