@@ -1,15 +1,16 @@
-import { Bell, Menu, Pause, Play, RefreshCw, Search } from 'lucide-react'
+import { Bell, LogOut, Menu, Pause, Play, RefreshCw, Search } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/appStore.js'
 import { clock } from '../../utils/formatters.js'
 import { getGlobalStatus } from '../../utils/effectiveConfig.js'
+import { API_MODE } from '../../api/client.js'
 import { PLATFORM_IDS } from '../../config/defaults.js'
 
 const TITLES = { '/': 'Overview', '/accounts': 'Live Accounts', '/platforms': 'Platforms', '/history': 'Live History', '/recordings': 'Recordings', '/notifications': 'Notifications', '/settings': 'Settings' }
 const LABEL = { running: 'Running', partial: 'Partially running', stopped: 'Stopped', starting: 'Starting' }
 
 export default function Topbar({ onMenu }) {
-  const { config, platformRuntime, lastRefresh, refreshDashboard, toggleGlobalMonitoring } = useAppStore()
+  const { config, platformRuntime, lastRefresh, refreshDashboard, toggleGlobalMonitoring, user, logout } = useAppStore()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const submitSearch = (e) => {
@@ -54,9 +55,14 @@ export default function Topbar({ onMenu }) {
         <Link className="icon-btn" to="/notifications" aria-label="Pengaturan notifikasi">
           <Bell size={16} />
         </Link>
-        <span className="avatar" aria-hidden>
-          AD
+        <span className="avatar" title={user?.username || 'Admin'} aria-hidden>
+          {(user?.username || 'AD').slice(0, 2).toUpperCase()}
         </span>
+        {API_MODE === 'http' && (
+          <button className="icon-btn" onClick={logout} aria-label="Keluar" title="Keluar">
+            <LogOut size={16} />
+          </button>
+        )}
       </div>
     </header>
   )
