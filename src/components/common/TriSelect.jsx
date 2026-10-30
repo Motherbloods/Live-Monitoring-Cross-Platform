@@ -1,4 +1,4 @@
-const toValue = (v) => (v === undefined ? 'inherit' : v ? 'on' : 'off')
+const toValue = (v) => (v === undefined || v === null ? 'inherit' : v ? 'on' : 'off')
 
 export default function TriSelect({ value, onChange, label }) {
   return (

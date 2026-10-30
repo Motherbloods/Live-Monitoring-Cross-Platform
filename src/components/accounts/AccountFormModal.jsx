@@ -4,10 +4,11 @@ import { useAppStore } from '../../store/appStore.js'
 import { validateAccount } from '../../utils/validators.js'
 import { interval } from '../../utils/formatters.js'
 import Switch from '../common/Switch.jsx'
+import TriSelect from '../common/TriSelect.jsx'
 
-const blank = { platformId: 'tiktok', profileUrl: '', username: '', displayName: '', monitoringEnabled: true, useCustomCheckInterval: false, customCheckIntervalSeconds: '', autoRecording: false, notifyEnabled: true, notifyOnStart: true, notifyOnEnd: false, notes: '' }
+const blank = { platformId: 'tiktok', profileUrl: '', username: '', displayName: '', monitoringEnabled: true, useCustomCheckInterval: false, customCheckIntervalSeconds: '', autoRecording: null, notifyEnabled: null, notifyOnStart: null, notifyOnEnd: null, notes: '' }
 
-const fromAccount = (a) => ({ ...blank, ...a, customCheckIntervalSeconds: a.customCheckIntervalSeconds ?? '', notifyOnStart: a.notifyOnStart ?? true, notifyOnEnd: a.notifyOnEnd ?? false })
+const fromAccount = (a) => ({ ...blank, ...a, customCheckIntervalSeconds: a.customCheckIntervalSeconds ?? '', autoRecording: a.autoRecording ?? null, notifyEnabled: a.notifyEnabled ?? null, notifyOnStart: a.notifyOnStart ?? null, notifyOnEnd: a.notifyOnEnd ?? null })
 
 export default function AccountFormModal({ account, defaultPlatform, onClose }) {
   const { accounts, config, addAccount, updateAccount } = useAppStore()
@@ -73,10 +74,10 @@ export default function AccountFormModal({ account, defaultPlatform, onClose }) 
 
         <div className="toggles">
           <div><span>Monitoring aktif</span><Switch checked={form.monitoringEnabled} onChange={(v) => set({ monitoringEnabled: v })} label="Monitoring aktif" /></div>
-          <div><span>Rekam otomatis</span><Switch checked={form.autoRecording} onChange={(v) => set({ autoRecording: v })} label="Rekam otomatis" /></div>
-          <div><span>Notifikasi</span><Switch checked={form.notifyEnabled} onChange={(v) => set({ notifyEnabled: v })} label="Notifikasi" /></div>
-          <div className={!form.notifyEnabled ? 'is-dim' : ''}><span>Saat live mulai</span><Switch checked={form.notifyOnStart} disabled={!form.notifyEnabled} onChange={(v) => set({ notifyOnStart: v })} label="Notifikasi live mulai" /></div>
-          <div className={!form.notifyEnabled ? 'is-dim' : ''}><span>Saat live berakhir</span><Switch checked={form.notifyOnEnd} disabled={!form.notifyEnabled} onChange={(v) => set({ notifyOnEnd: v })} label="Notifikasi live berakhir" /></div>
+          <div><span>Rekam otomatis</span><TriSelect value={form.autoRecording} onChange={(v) => set({ autoRecording: v ?? null })} label="Rekam otomatis" /></div>
+          <div><span>Notifikasi</span><TriSelect value={form.notifyEnabled} onChange={(v) => set({ notifyEnabled: v ?? null })} label="Notifikasi" /></div>
+          <div><span>Saat live mulai</span><TriSelect value={form.notifyOnStart} onChange={(v) => set({ notifyOnStart: v ?? null })} label="Notifikasi live mulai" /></div>
+          <div><span>Saat live berakhir</span><TriSelect value={form.notifyOnEnd} onChange={(v) => set({ notifyOnEnd: v ?? null })} label="Notifikasi live berakhir" /></div>
           <div><span>Interval khusus</span><Switch checked={form.useCustomCheckInterval} onChange={(v) => set({ useCustomCheckInterval: v })} label="Interval khusus" /></div>
         </div>
 
