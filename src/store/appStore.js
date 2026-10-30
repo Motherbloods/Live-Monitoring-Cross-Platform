@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { accountsApi } from '../api/accountsApi.js'
 import { monitoringApi } from '../api/monitoringApi.js'
+import { platformsApi } from '../api/platformsApi.js'
 import { loadConfig, saveConfig, updateGlobalConfig, updatePlatformConfig } from '../config/configurationManager.js'
+import { mockLogs } from '../data/mockLogs.js'
 import { mockAccounts, mockActivities, mockPlatformRuntime, mockRuntime } from '../data/mockAccounts.js'
 import { getEligibility } from '../utils/effectiveConfig.js'
 
@@ -17,6 +19,7 @@ export const useAppStore = create((set, get) => ({
   runtime: mockRuntime,
   platformRuntime: mockPlatformRuntime,
   activities: mockActivities,
+  logs: mockLogs,
   lastRefresh: new Date().toISOString(),
   toasts: [],
   busy: { checkAll: false },
@@ -108,6 +111,64 @@ export const useAppStore = create((set, get) => ({
       result.ok ? `${account.displayName}: ${status === 'live' ? 'sedang live' : 'tidak live'} (simulasi).` : `Pemeriksaan ${account.displayName} gagal. Status sebelumnya tidak diubah.`,
       result.ok ? 'ok' : 'warn'
     )
+  },
+
+  addLog: (platformId, level, message) =>
+    set((s) => ({ logs: [{ id: `log_${Date.now()}_${Math.random()}`, platformId, level, message, at: new Date().toISOString() }, ...s.logs].slice(0, 200) })),
+
+  setPlatformRuntime: (id, patch) => set((s) => ({ platformRuntime: { ...s.platformRuntime, [id]: { ...s.platformRuntime[id], ...patch } } })),
+
+  savePlatformConfig: async (id, patch) => {
+    await platformsApi.saveConfig(id, patch)
+    get().setPlatform(id, patch)
+    get().addActivity({ type: 'config_updated', platformId: id, text: 'Konfigurasi service diperbarui' })
+    get().addLog(id, 'INFO', 'Konfigurasi service disimpan (lokal)')
+    get().pushToast('Konfigurasi platform disimpan secara lokal.', 'ok')
+  },
+
+  setServiceEnabled: async (id, enabled) => {
+    get().setPlatform(id, { serviceEnabled: enabled })
+    get().addActivity({ type: enabled ? 'monitoring_enabled' : 'monitoring_disabled', platformId: id, text: `Service ${enabled ? 'diaktifkan' : 'dinonaktifkan'}` })
+    get().addLog(id, 'INFO', enabled ? 'Service diaktifkan' : 'Service dinonaktifkan')
+    if (!enabled) {
+      get().pushToast('Service dinonaktifkan. Akun dan konfigurasinya tetap tersimpan.', 'info')
+      return
+    }
+    get().setPlatformRuntime(id, { status: 'starting' })
+    const result = await platformsApi.startService(id)
+    get().setPlatformRuntime(id, { ...result, lastSuccess: new Date().toISOString() })
+    get().pushToast('Service aktif kembali (simulasi).', 'ok')
+  },
+
+  restartPlatform: async (id) => {
+    get().setPlatformRuntime(id, { status: 'starting' })
+    get().addLog(id, 'INFO', 'Restart service diminta')
+    const result = await monitoringApi.restartPlatform(id)
+    get().setPlatformRuntime(id, result)
+    get().addActivity({ type: 'service_recovered', platformId: id, text: 'Service berhasil di-restart' })
+    get().addLog(id, 'INFO', 'Service berjalan kembali')
+    get().pushToast('Service di-restart (simulasi).', 'ok')
+  },
+
+  checkPlatform: async (id) => {
+    const { accounts, config, runtime, platformRuntime } = get()
+    if (platformRuntime[id].status === 'offline') {
+      get().addLog(id, 'ERROR', 'Pemeriksaan dibatalkan: service offline')
+      get().pushToast('Service sedang offline. Restart service dulu. Status akun tidak diubah.', 'warn')
+      return
+    }
+    const targets = accounts.filter((a) => a.platformId === id && getEligibility(a, config).eligible)
+    if (!targets.length) {
+      get().pushToast('Tidak ada akun platform ini yang memenuhi syarat pemeriksaan.', 'warn')
+      return
+    }
+    set((s) => ({ runtime: { ...s.runtime, ...Object.fromEntries(targets.map((a) => [a.id, { ...s.runtime[a.id], checking: true }])) } }))
+    const results = await monitoringApi.checkAccounts(targets, runtime)
+    const ok = results.filter((r) => r.ok).length
+    set((s) => ({ lastRefresh: new Date().toISOString(), runtime: { ...s.runtime, ...Object.fromEntries(results.map((r) => [r.id, { ...s.runtime[r.id], ...r.patch }])) } }))
+    if (ok) get().setPlatformRuntime(id, { lastSuccess: new Date().toISOString() })
+    get().addLog(id, ok === results.length ? 'INFO' : 'WARN', `Pemeriksaan ${results.length} akun: ${ok} berhasil, ${results.length - ok} gagal`)
+    get().pushToast(`${ok} dari ${results.length} akun berhasil diperiksa (simulasi).`, ok === results.length ? 'ok' : 'warn')
   },
 
   checkAllEnabled: async () => {
