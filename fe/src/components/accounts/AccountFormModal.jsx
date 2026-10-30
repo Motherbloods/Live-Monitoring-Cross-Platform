@@ -28,8 +28,9 @@ export default function AccountFormModal({ account, defaultPlatform, onClose }) 
     setErrors(found)
     if (Object.keys(found).length) return
     setSaving(true)
+    let ok
     if (account) {
-      await updateAccount(account.id, {
+      ok = await updateAccount(account.id, {
         platformId: form.platformId,
         username,
         displayName: form.displayName.trim() || username,
@@ -44,10 +45,10 @@ export default function AccountFormModal({ account, defaultPlatform, onClose }) 
         notes: form.notes.trim()
       })
     } else {
-      await addAccount(form, username)
+      ok = await addAccount(form, username)
     }
     setSaving(false)
-    onClose()
+    if (ok !== false) onClose()
   }
 
   const row = (label, name, input, hint) => (

@@ -4,7 +4,7 @@ import { useAppStore } from '../store/appStore.js'
 import { PLATFORMS } from '../config/defaults.js'
 import { dateTime, minutes } from '../utils/formatters.js'
 
-const mins = (h) => Math.round((new Date(h.endAt) - new Date(h.startAt)) / 60000)
+const mins = (h) => Math.round((new Date(h.endAt || Date.now()) - new Date(h.startAt)) / 60000)
 const RANGES = { all: [0, Infinity], short: [0, 30], mid: [30, 120], long: [120, Infinity] }
 
 export default function LiveHistory() {
@@ -84,6 +84,7 @@ export default function LiveHistory() {
           <option value="all">Semua status</option>
           <option value="ended">Ended</option>
           <option value="interrupted">Interrupted</option>
+          <option value="live">Live</option>
         </select>
         <input type="date" className="date-input" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Dari tanggal" />
         <input type="date" className="date-input" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Sampai tanggal" />
@@ -98,9 +99,9 @@ export default function LiveHistory() {
               <div className="drow" key={h.id} style={{ '--accent': p.color }}>
                 <div className="acell acct" data-label="Account"><span className="svc-mark" aria-hidden /><div><strong>{h.displayName}</strong><small>@{h.username} · {p.short}</small></div></div>
                 <div className="acell" data-label="Mulai">{dateTime(h.startAt)}</div>
-                <div className="acell" data-label="Selesai">{dateTime(h.endAt)}</div>
+                <div className="acell" data-label="Selesai">{h.endAt ? dateTime(h.endAt) : '—'}</div>
                 <div className="acell" data-label="Durasi">{minutes(mins(h))}</div>
-                <div className="acell" data-label="Status akhir"><span className={`badge ${h.status === 'ended' ? '' : 'badge-degraded'}`}>{h.status === 'ended' ? 'Ended' : 'Interrupted'}</span></div>
+                <div className="acell" data-label="Status akhir"><span className={`badge ${h.status === 'ended' ? '' : h.status === 'live' ? 'badge-live' : 'badge-degraded'}`}>{{ ended: 'Ended', live: 'Live', interrupted: 'Interrupted' }[h.status]}</span></div>
                 <div className="acell right" data-label="Live URL"><a className="icon-btn" href={h.url} target="_blank" rel="noreferrer" aria-label={`Buka profil ${h.displayName}`}><ExternalLink size={15} /></a></div>
               </div>
             )
