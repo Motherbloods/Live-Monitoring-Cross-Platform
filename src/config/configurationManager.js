@@ -4,6 +4,17 @@ const STORAGE_KEY = 'livemonitor.config.v1'
 
 const clone = (v) => JSON.parse(JSON.stringify(v))
 
+export const mergeWithDefaults = (cfg) => {
+  const base = clone(DEFAULT_CONFIG)
+  const out = { global: { ...base.global, ...cfg.global }, platforms: {} }
+  out.global.notificationDefaults = { ...base.global.notificationDefaults, ...cfg.global?.notificationDefaults }
+  out.global.recordingDefaults = { ...base.global.recordingDefaults, ...cfg.global?.recordingDefaults }
+  for (const id of Object.keys(base.platforms)) {
+    out.platforms[id] = { ...base.platforms[id], ...cfg.platforms?.[id] }
+  }
+  return out
+}
+
 export const getGlobalConfig = (cfg) => cfg.global
 export const getPlatformConfig = (cfg, id) => cfg.platforms[id]
 export const updateGlobalConfig = (cfg, patch) => ({ ...cfg, global: { ...cfg.global, ...patch } })
@@ -26,6 +37,12 @@ export const validateConfig = (cfg) => {
   if (!inRange(g.defaultRetryDelaySeconds, LIMITS.retryDelay)) errors.push('Retry delay global tidak valid.')
   if (!inRange(g.defaultRequestTimeoutMs, LIMITS.timeoutMs)) errors.push('Request timeout global tidak valid.')
   if (!inRange(g.maxConcurrentChecks, LIMITS.concurrency)) errors.push('Maximum concurrent checks global tidak valid.')
+  const r = g.recordingDefaults
+  if (r) {
+    if (!r.outputDirectory?.trim()) errors.push('Output directory rekaman wajib diisi.')
+    if (!inRange(r.maxDurationMinutes, LIMITS.recordingDuration)) errors.push('Durasi maksimum rekaman tidak valid.')
+    if (!inRange(r.maxConcurrentRecordings, LIMITS.recordingConcurrent)) errors.push('Jumlah rekaman bersamaan tidak valid.')
+  }
   for (const p of PLATFORMS) {
     const pc = cfg.platforms[p.id]
     if (!pc) {
@@ -46,8 +63,9 @@ export const loadConfig = () => {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { config: clone(DEFAULT_CONFIG), savedAt: null, recovered: false }
     const parsed = JSON.parse(raw)
-    if (validateConfig(parsed.config).length) throw new Error('invalid')
-    return { config: parsed.config, savedAt: parsed.savedAt, recovered: false }
+    const merged = mergeWithDefaults(parsed.config)
+    if (validateConfig(merged).length) throw new Error('invalid')
+    return { config: merged, savedAt: parsed.savedAt, recovered: false }
   } catch {
     return { config: clone(DEFAULT_CONFIG), savedAt: null, recovered: true }
   }
@@ -64,8 +82,10 @@ export const exportConfig = (cfg) => JSON.stringify({ version: 1, config: cfg },
 export const importConfig = (text) => {
   try {
     const parsed = JSON.parse(text)
-    const errors = validateConfig(parsed.config)
-    return errors.length ? { ok: false, errors } : { ok: true, config: parsed.config }
+    if (!parsed.config?.global || !parsed.config?.platforms) return { ok: false, errors: ['Struktur konfigurasi tidak lengkap.'] }
+    const merged = mergeWithDefaults(parsed.config)
+    const errors = validateConfig(merged)
+    return errors.length ? { ok: false, errors } : { ok: true, config: merged }
   } catch {
     return { ok: false, errors: ['File bukan JSON yang valid.'] }
   }
