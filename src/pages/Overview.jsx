@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink, Plus, RefreshCw, ScanSearch, Tv } from 'lucide-react'
 import { useAppStore } from '../store/appStore.js'
 import { PLATFORMS } from '../config/defaults.js'
-import { computeStats, getEligibility, getGlobalStatus, resolveEffectiveConfig } from '../utils/effectiveConfig.js'
+import { computeStats, getEligibility, getPlatformSummary, getGlobalStatus, resolveEffectiveConfig } from '../utils/effectiveConfig.js'
 import { ago, clock, compact, duration, interval } from '../utils/formatters.js'
 import StatusBadge from '../components/common/StatusBadge.jsx'
 
@@ -165,8 +165,7 @@ export default function Overview() {
               const pc = config.platforms[p.id]
               const rt = platformRuntime[p.id]
               const own = accounts.filter((a) => a.platformId === p.id)
-              const live = own.filter((a) => runtime[a.id]?.lastStatus === 'live' && a.monitoringEnabled && stats.live >= 0 && rt.status !== 'offline' && pc.serviceEnabled).length
-              const unable = own.filter((a) => a.monitoringEnabled && (!pc.serviceEnabled || rt.status === 'offline' || runtime[a.id]?.lastStatus === 'unknown' || runtime[a.id]?.lastStatus === 'error')).length
+              const { live, unable } = getPlatformSummary(p.id, accounts, runtime, platformRuntime, config)
               const status = !pc.serviceEnabled ? 'svcDisabled' : rt.status === 'offline' ? 'svcOffline' : rt.status
               const sample = own[0] ? resolveEffectiveConfig(own[0], config).checkIntervalSeconds : config.global.defaultCheckIntervalSeconds
               const platformInterval = pc.checkIntervalSeconds || config.global.defaultCheckIntervalSeconds
