@@ -1,13 +1,16 @@
 import { create } from 'zustand'
 import { accountsApi } from '../api/accountsApi.js'
 import { monitoringApi } from '../api/monitoringApi.js'
+import { settingsApi } from '../api/settingsApi.js'
+import { setTimezone } from '../utils/formatters.js'
 import { platformsApi } from '../api/platformsApi.js'
-import { loadConfig, saveConfig, updateGlobalConfig, updatePlatformConfig } from '../config/configurationManager.js'
+import { loadConfig, resetToDefaults, saveConfig, updateGlobalConfig, updatePlatformConfig, validateConfig } from '../config/configurationManager.js'
 import { mockLogs } from '../data/mockLogs.js'
 import { mockAccounts, mockActivities, mockPlatformRuntime, mockRuntime } from '../data/mockAccounts.js'
 import { getEligibility } from '../utils/effectiveConfig.js'
 
 const initial = loadConfig()
+setTimezone(initial.config.global.timezone)
 let toastId = 0
 
 export const useAppStore = create((set, get) => ({
@@ -40,13 +43,13 @@ export const useAppStore = create((set, get) => ({
   setGlobal: (patch) => {
     const config = updateGlobalConfig(get().config, patch)
     saveConfig(config)
-    set({ config, draft: config, savedAt: new Date().toISOString() })
+    set((s) => ({ config, draft: updateGlobalConfig(s.draft, patch), savedAt: new Date().toISOString() }))
   },
 
   setPlatform: (id, patch) => {
     const config = updatePlatformConfig(get().config, id, patch)
     saveConfig(config)
-    set({ config, draft: config, savedAt: new Date().toISOString() })
+    set((s) => ({ config, draft: updatePlatformConfig(s.draft, id, patch), savedAt: new Date().toISOString() }))
   },
 
   toggleGlobalMonitoring: () => {
@@ -170,6 +173,33 @@ export const useAppStore = create((set, get) => ({
     get().addLog(id, ok === results.length ? 'INFO' : 'WARN', `Pemeriksaan ${results.length} akun: ${ok} berhasil, ${results.length - ok} gagal`)
     get().pushToast(`${ok} dari ${results.length} akun berhasil diperiksa (simulasi).`, ok === results.length ? 'ok' : 'warn')
   },
+
+  setDraftGlobal: (patch) => set((s) => ({ draft: updateGlobalConfig(s.draft, patch) })),
+
+  discardDraft: () => {
+    set((s) => ({ draft: s.config }))
+    get().pushToast('Perubahan dibatalkan. Konfigurasi kembali ke versi tersimpan.', 'info')
+  },
+
+  commitConfig: async (next, message) => {
+    const errors = validateConfig(next)
+    if (errors.length) {
+      get().pushToast(errors[0], 'warn')
+      return false
+    }
+    const savedAt = await settingsApi.saveConfig(next)
+    setTimezone(next.global.timezone)
+    set({ config: next, draft: next, savedAt, recovered: false })
+    get().addActivity({ type: 'config_updated', platformId: null, text: message })
+    get().pushToast(`${message}. Tersimpan lokal, belum diterapkan ke server.`, 'ok')
+    return true
+  },
+
+  saveDraft: () => get().commitConfig(get().draft, 'Konfigurasi disimpan'),
+
+  resetConfig: () => get().commitConfig(resetToDefaults(), 'Konfigurasi dikembalikan ke default'),
+
+  applyImportedConfig: (cfg) => get().commitConfig(cfg, 'Konfigurasi diimpor'),
 
   checkAllEnabled: async () => {
     const { accounts, config, runtime } = get()
