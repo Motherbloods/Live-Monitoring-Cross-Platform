@@ -13,7 +13,9 @@ export const LIMITS = {
   retryAttempts: { min: 0, max: 10 },
   retryDelay: { min: 1, max: 600 },
   timeoutMs: { min: 1000, max: 120000 },
-  concurrency: { min: 1, max: 50 }
+  concurrency: { min: 1, max: 50 },
+  recordingDuration: { min: 1, max: 1440 },
+  recordingConcurrent: { min: 1, max: 10 }
 }
 
 const platformDefaults = (interval) => ({
@@ -23,7 +25,9 @@ const platformDefaults = (interval) => ({
   retryAttempts: null,
   retryDelaySeconds: null,
   requestTimeoutMs: null,
-  maxConcurrentChecks: null
+  maxConcurrentChecks: null,
+  notificationOverrides: {},
+  recordingOverrides: {}
 })
 
 export const DEFAULT_CONFIG = {
@@ -39,7 +43,24 @@ export const DEFAULT_CONFIG = {
     dashboardRefreshIntervalSeconds: 15,
     showOfflineAccounts: true,
     showUnknownAccounts: true,
-    compactMode: false
+    compactMode: false,
+    notificationDefaults: {
+      enabled: true,
+      liveStart: true,
+      liveEnd: false,
+      serviceFail: true,
+      serviceRecover: true,
+      recordingStart: false,
+      recordingFail: true
+    },
+    recordingDefaults: {
+      autoRecording: false,
+      outputDirectory: 'recordings',
+      outputFormat: 'ts',
+      maxDurationMinutes: 240,
+      maxConcurrentRecordings: 3,
+      retryOnFailure: true
+    }
   },
   platforms: {
     tiktok: platformDefaults(30),
@@ -49,3 +70,13 @@ export const DEFAULT_CONFIG = {
     twitch: platformDefaults(null)
   }
 }
+
+export const NOTIFICATION_EVENTS = [
+  ['enabled', 'Aktifkan notifikasi'],
+  ['liveStart', 'Saat live dimulai'],
+  ['liveEnd', 'Saat live berakhir'],
+  ['serviceFail', 'Saat service gagal'],
+  ['serviceRecover', 'Saat service pulih'],
+  ['recordingStart', 'Saat rekaman dimulai'],
+  ['recordingFail', 'Saat rekaman gagal']
+]

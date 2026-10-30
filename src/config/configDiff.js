@@ -1,4 +1,4 @@
-import { PLATFORMS } from './defaults.js'
+import { NOTIFICATION_EVENTS, PLATFORMS } from './defaults.js'
 
 const GLOBAL_LABELS = {
   appName: 'Nama aplikasi',
@@ -33,7 +33,13 @@ export const diffConfig = (before, after) => {
     if (a !== b) rows.push({ label, before: show(a), after: show(b) })
   }
   for (const key of Object.keys(GLOBAL_LABELS)) push(GLOBAL_LABELS[key], before.global[key], after.global[key])
+  for (const [key, label] of NOTIFICATION_EVENTS) push(`Notifikasi · ${label}`, before.global.notificationDefaults?.[key], after.global.notificationDefaults?.[key])
+  for (const key of ['autoRecording', 'outputDirectory', 'outputFormat', 'maxDurationMinutes', 'maxConcurrentRecordings', 'retryOnFailure']) {
+    push(`Rekaman · ${key}`, before.global.recordingDefaults?.[key], after.global.recordingDefaults?.[key])
+  }
   for (const p of PLATFORMS) {
+    push(`${p.short} · Override notifikasi`, JSON.stringify(before.platforms[p.id]?.notificationOverrides || {}), JSON.stringify(after.platforms[p.id]?.notificationOverrides || {}))
+    push(`${p.short} · Override rekaman`, JSON.stringify(before.platforms[p.id]?.recordingOverrides || {}), JSON.stringify(after.platforms[p.id]?.recordingOverrides || {}))
     for (const key of Object.keys(PLATFORM_LABELS)) {
       push(`${p.short} · ${PLATFORM_LABELS[key]}`, before.platforms[p.id]?.[key], after.platforms[p.id]?.[key])
     }
