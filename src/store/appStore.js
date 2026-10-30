@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { accountsApi } from '../api/accountsApi.js'
 import { monitoringApi } from '../api/monitoringApi.js'
 import { loadConfig, saveConfig, updateGlobalConfig, updatePlatformConfig } from '../config/configurationManager.js'
 import { mockAccounts, mockActivities, mockPlatformRuntime, mockRuntime } from '../data/mockAccounts.js'
@@ -54,6 +55,59 @@ export const useAppStore = create((set, get) => ({
       text: enabled ? 'Global monitoring dihidupkan' : 'Global monitoring dijeda'
     })
     get().pushToast(enabled ? 'Global monitoring aktif kembali.' : 'Global monitoring dijeda. Status terakhir mungkin tidak aktual.', 'info')
+  },
+
+  addAccount: async (form, username) => {
+    const account = await accountsApi.create(form, username)
+    set((s) => ({
+      accounts: [account, ...s.accounts],
+      runtime: { ...s.runtime, [account.id]: { checking: false, lastStatus: 'unknown', lastChecked: null, lastSuccess: null, lastError: null, live: null } }
+    }))
+    get().addActivity({ type: 'config_updated', platformId: account.platformId, text: `Akun ${account.displayName} ditambahkan` })
+    get().pushToast(`${account.displayName} ditambahkan. Statusnya Unknown sampai diperiksa.`, 'ok')
+    return account
+  },
+
+  updateAccount: async (id, patch) => {
+    await accountsApi.update(patch)
+    set((s) => ({ accounts: s.accounts.map((a) => (a.id === id ? { ...a, ...patch } : a)) }))
+    get().addActivity({ type: 'config_updated', platformId: patch.platformId || null, text: `Konfigurasi ${patch.displayName || 'akun'} diperbarui` })
+    get().pushToast('Perubahan akun disimpan.', 'ok')
+  },
+
+  deleteAccount: async (id) => {
+    const account = get().accounts.find((a) => a.id === id)
+    await accountsApi.remove(id)
+    set((s) => {
+      const { [id]: removed, ...rest } = s.runtime
+      return { accounts: s.accounts.filter((a) => a.id !== id), runtime: rest }
+    })
+    get().addActivity({ type: 'config_updated', platformId: account.platformId, text: `Akun ${account.displayName} dihapus` })
+    get().pushToast(`${account.displayName} dihapus. Riwayat live tetap tersimpan.`, 'info')
+  },
+
+  setAccountMonitoring: async (id, enabled) => {
+    const account = get().accounts.find((a) => a.id === id)
+    await accountsApi.update({ monitoringEnabled: enabled })
+    set((s) => ({ accounts: s.accounts.map((a) => (a.id === id ? { ...a, monitoringEnabled: enabled } : a)) }))
+    get().addActivity({
+      type: enabled ? 'monitoring_enabled' : 'monitoring_disabled',
+      platformId: account.platformId,
+      text: `Monitoring ${account.displayName} ${enabled ? 'diaktifkan' : 'dinonaktifkan'}`
+    })
+  },
+
+  checkAccount: async (id) => {
+    const { accounts, runtime } = get()
+    const account = accounts.find((a) => a.id === id)
+    set((s) => ({ runtime: { ...s.runtime, [id]: { ...s.runtime[id], checking: true } } }))
+    const [result] = await monitoringApi.checkAccounts([account], runtime)
+    set((s) => ({ lastRefresh: new Date().toISOString(), runtime: { ...s.runtime, [id]: { ...s.runtime[id], ...result.patch } } }))
+    const status = result.patch.lastStatus
+    get().pushToast(
+      result.ok ? `${account.displayName}: ${status === 'live' ? 'sedang live' : 'tidak live'} (simulasi).` : `Pemeriksaan ${account.displayName} gagal. Status sebelumnya tidak diubah.`,
+      result.ok ? 'ok' : 'warn'
+    )
   },
 
   checkAllEnabled: async () => {
