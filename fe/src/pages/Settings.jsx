@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { RotateCcw, Upload } from 'lucide-react'
+import { API_MODE, API_URL } from '../api/client.js'
 import { useAppStore } from '../store/appStore.js'
 import { LIMITS } from '../config/defaults.js'
 import { importConfig, resetToDefaults, validateConfig } from '../config/configurationManager.js'
@@ -48,7 +49,7 @@ function Row({ label, hint, children }) {
 }
 
 export default function Settings() {
-  const { config, draft, accounts, savedAt, recovered, setDraftGlobal, saveDraft, discardDraft, resetConfig, applyImportedConfig, pushToast } = useAppStore()
+  const { connection, config, draft, accounts, savedAt, recovered, setDraftGlobal, saveDraft, discardDraft, resetConfig, applyImportedConfig, pushToast } = useAppStore()
   const g = draft.global
   const [saving, setSaving] = useState(false)
   const [pending, setPending] = useState(null)
@@ -185,9 +186,9 @@ export default function Settings() {
       <section className="set-section">
         <h3>System information</h3>
         <dl className="health">
-          <div><dt>Configuration storage</dt><dd>Local (browser)</dd></div>
-          <div><dt>Backend connection</dt><dd>Not configured</dd></div>
-          <div><dt>Monitoring engine</dt><dd>Mock mode</dd></div>
+          <div><dt>Configuration storage</dt><dd>{API_MODE === 'http' ? 'Server' : 'Local (browser)'}</dd></div>
+          <div><dt>Backend connection</dt><dd>{API_MODE === 'http' ? (connection === 'online' ? `Connected (${API_URL})` : 'Unreachable') : 'Not configured'}</dd></div>
+          <div><dt>Monitoring engine</dt><dd>{API_MODE === 'http' ? 'Server (checker dummy)' : 'Mock mode'}</dd></div>
           <div><dt>Last local configuration save</dt><dd>{savedAt ? clock(savedAt) : 'Belum pernah'}</dd></div>
         </dl>
       </section>

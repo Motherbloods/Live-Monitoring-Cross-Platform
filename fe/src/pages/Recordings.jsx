@@ -1,5 +1,6 @@
 import { useAppStore } from '../store/appStore.js'
 import { resolveAccountRecording } from '../utils/effectiveConfig.js'
+import { Film } from 'lucide-react'
 import RecordingTable from '../components/recordings/RecordingTable.jsx'
 import RecordingSettingsForm from '../components/recordings/RecordingSettingsForm.jsx'
 
@@ -37,7 +38,13 @@ export default function Recordings() {
 
       <section className="section">
         <div className="section-head"><h3>Daftar rekaman</h3></div>
-        <RecordingTable rows={recordings} />
+        {recordings.length ? <RecordingTable rows={recordings} /> : (
+          <div className="empty">
+            <Film size={22} aria-hidden />
+            <strong>Belum ada rekaman</strong>
+            <p>Rekaman akan muncul di sini setelah fitur perekaman di server dikerjakan.</p>
+          </div>
+        )}
       </section>
 
       <section className="section">
