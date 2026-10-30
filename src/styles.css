@@ -279,3 +279,35 @@ select { height: 32px; padding: 0 28px 0 10px; border-radius: 8px; border: 1px s
   .search-wide { max-width: none; }
   .filters select { flex: 1 1 140px; }
 }
+
+.gm { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding: 18px 0; margin-bottom: 8px; border-block: 1px solid var(--line); }
+.gm-state { font-size: 18px; font-weight: 700; }
+.gm p { color: var(--muted); margin-top: 2px; }
+.plist > li { --accent: #888; display: grid; grid-template-columns: 3px minmax(0, 1.5fr) auto auto; gap: 20px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.plist > li.is-dim { opacity: 0.6; }
+.p-nums { display: flex; gap: 22px; }
+.p-nums dt { font-size: 11.5px; color: var(--faint); font-weight: 600; }
+.p-nums dd { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); margin-bottom: 14px; font-size: 13px; }
+.back:hover { color: var(--text); }
+.detail-title { display: flex; gap: 14px; align-items: stretch; }
+.detail-title > div { display: grid; gap: 6px; justify-items: start; }
+.svc-mark.tall { width: 4px; background: var(--accent); border-radius: 2px; }
+.mini-list > li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.mini-list > li > div { display: grid; min-width: 0; }
+.cfg-head { margin-bottom: 8px; }
+.toggles-one { grid-template-columns: 1fr; margin-bottom: 12px; }
+.modal-actions.left { justify-content: flex-start; margin-top: 16px; }
+.log-search { height: 32px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); flex: 1 1 160px; }
+.logs > li { display: grid; grid-template-columns: 48px 52px 1fr; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: baseline; }
+.logs time { color: var(--faint); font-variant-numeric: tabular-nums; }
+.lv { font-size: 11px; font-weight: 700; }
+.lv-INFO { color: var(--info); }
+.lv-WARN { color: var(--warn); }
+.lv-ERROR { color: #ff8587; }
+
+@media (max-width: 1100px) {
+  .plist > li { grid-template-columns: 3px minmax(0, 1fr); }
+  .plist .p-nums, .plist .btn { grid-column: 2; }
+  .plist .btn { justify-self: start; }
+}
