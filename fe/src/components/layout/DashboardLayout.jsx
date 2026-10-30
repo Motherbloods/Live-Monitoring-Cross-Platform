@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar.jsx'
 import Topbar from './Topbar.jsx'
+import ConnectionBanner from '../common/ConnectionBanner.jsx'
+import { API_MODE } from '../../api/client.js'
 import ErrorBoundary from '../common/ErrorBoundary.jsx'
 import PageSkeleton from '../common/Skeleton.jsx'
 import Toasts from '../common/Toasts.jsx'
@@ -12,6 +14,8 @@ export default function DashboardLayout() {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const refresh = useAppStore((s) => s.refreshDashboard)
+  const hydrate = useAppStore((s) => s.hydrate)
+  const ready = useAppStore((s) => s.ready)
   const seconds = useAppStore((s) => s.config.global.dashboardRefreshIntervalSeconds)
   const compactMode = useAppStore((s) => s.config.global.compactMode)
   const { pathname } = useLocation()
@@ -30,6 +34,11 @@ export default function DashboardLayout() {
   useEffect(() => setOpen(false), [pathname])
 
   useEffect(() => {
+    if (API_MODE === 'http') hydrate()
+  }, [hydrate])
+
+  useEffect(() => {
+    if (API_MODE === 'http') return undefined
     const t = setTimeout(() => setLoading(false), 650)
     return () => clearTimeout(t)
   }, [])
@@ -40,8 +49,9 @@ export default function DashboardLayout() {
       {open && <div className="scrim" onClick={() => setOpen(false)} />}
       <div className="main">
         <Topbar onMenu={() => setOpen(true)} />
+        <ConnectionBanner />
         <main key={pathname} className="page-enter">
-          <ErrorBoundary resetKey={pathname}>{loading ? <PageSkeleton /> : <Outlet />}</ErrorBoundary>
+          <ErrorBoundary resetKey={pathname}>{(API_MODE === 'http' ? !ready : loading) ? <PageSkeleton /> : <Outlet />}</ErrorBoundary>
         </main>
       </div>
       <Toasts />
