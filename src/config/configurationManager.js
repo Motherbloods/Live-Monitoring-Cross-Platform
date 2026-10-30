@@ -20,6 +20,7 @@ export const validateConfig = (cfg) => {
   const errors = []
   if (!cfg || typeof cfg !== 'object' || !cfg.global || !cfg.platforms) return ['Struktur konfigurasi tidak lengkap.']
   const g = cfg.global
+  if (typeof g.appName !== 'string' || !g.appName.trim() || g.appName.length > 40) errors.push('Nama aplikasi wajib diisi (maksimal 40 karakter).')
   if (!inRange(g.defaultCheckIntervalSeconds, LIMITS.interval)) errors.push('Interval global di luar batas yang diizinkan.')
   if (!inRange(g.defaultRetryAttempts, LIMITS.retryAttempts)) errors.push('Retry attempts global tidak valid.')
   if (!inRange(g.defaultRetryDelaySeconds, LIMITS.retryDelay)) errors.push('Retry delay global tidak valid.')

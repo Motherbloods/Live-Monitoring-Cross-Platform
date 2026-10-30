@@ -14,7 +14,13 @@ export const duration = (fromIso, now = Date.now()) => {
   return h ? `${h}j ${m}m` : `${m}m`
 }
 
-export const clock = (iso) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+let activeTimezone = 'Asia/Jakarta'
+
+export const setTimezone = (tz) => {
+  activeTimezone = tz
+}
+
+export const clock = (iso) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: activeTimezone })
 
 export const interval = (sec) => (sec >= 120 && sec % 60 === 0 ? `${sec / 60} mnt` : `${sec} dtk`)
 
