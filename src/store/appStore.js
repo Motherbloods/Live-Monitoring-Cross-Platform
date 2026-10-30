@@ -1,10 +1,14 @@
 import { create } from 'zustand'
 import { accountsApi } from '../api/accountsApi.js'
 import { monitoringApi } from '../api/monitoringApi.js'
+import { notificationsApi } from '../api/notificationsApi.js'
+import { recordingsApi } from '../api/recordingsApi.js'
 import { settingsApi } from '../api/settingsApi.js'
 import { setTimezone } from '../utils/formatters.js'
 import { platformsApi } from '../api/platformsApi.js'
 import { loadConfig, resetToDefaults, saveConfig, updateGlobalConfig, updatePlatformConfig, validateConfig } from '../config/configurationManager.js'
+import { mockHistory } from '../data/mockHistory.js'
+import { mockRecordings } from '../data/mockRecordings.js'
 import { mockLogs } from '../data/mockLogs.js'
 import { mockAccounts, mockActivities, mockPlatformRuntime, mockRuntime } from '../data/mockAccounts.js'
 import { getEligibility } from '../utils/effectiveConfig.js'
@@ -23,6 +27,8 @@ export const useAppStore = create((set, get) => ({
   platformRuntime: mockPlatformRuntime,
   activities: mockActivities,
   logs: mockLogs,
+  history: mockHistory,
+  recordings: mockRecordings,
   lastRefresh: new Date().toISOString(),
   toasts: [],
   busy: { checkAll: false },
@@ -200,6 +206,31 @@ export const useAppStore = create((set, get) => ({
   resetConfig: () => get().commitConfig(resetToDefaults(), 'Konfigurasi dikembalikan ke default'),
 
   applyImportedConfig: (cfg) => get().commitConfig(cfg, 'Konfigurasi diimpor'),
+
+  saveConfigSection: async (apply, message) => {
+    const next = apply(get().config)
+    const errors = validateConfig(next)
+    if (errors.length) {
+      get().pushToast(errors[0], 'warn')
+      return false
+    }
+    const savedAt = await settingsApi.saveConfig(next)
+    set((s) => ({ config: next, draft: apply(s.draft), savedAt }))
+    get().addActivity({ type: 'config_updated', platformId: null, text: message })
+    get().pushToast(`${message}. Tersimpan lokal, belum diterapkan ke server.`, 'ok')
+    return true
+  },
+
+  sendTestNotification: async () => {
+    const result = await notificationsApi.sendTest()
+    get().pushToast(result.ok ? 'Notifikasi uji dikirim (simulasi). Tidak ada pesan nyata yang terkirim.' : 'Notifikasi uji gagal (simulasi).', result.ok ? 'ok' : 'warn')
+  },
+
+  setRecordingStatus: async (id, status) => {
+    await recordingsApi.changeStatus(id, status)
+    set((s) => ({ recordings: s.recordings.map((r) => (r.id === id ? { ...r, status } : r)) }))
+    get().pushToast(status === 'cancelled' ? 'Rekaman dibatalkan (simulasi).' : 'Rekaman masuk antrean (simulasi).', 'info')
+  },
 
   checkAllEnabled: async () => {
     const { accounts, config, runtime } = get()
