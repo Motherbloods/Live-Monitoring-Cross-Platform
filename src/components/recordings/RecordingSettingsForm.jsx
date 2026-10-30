@@ -79,7 +79,7 @@ export default function RecordingSettingsForm() {
             <input className="set-input short" type="number" placeholder="Ikut global" value={ov.maxDurationMinutes ?? ''} onChange={(e) => setO('maxDurationMinutes', e.target.value === '' ? '' : Number(e.target.value))} />
           </li>
         </ul>
-        <p className="note">Pengaturan Auto recording pada form akun mengalahkan platform dan global.</p>
+        <p className="note">Jika sebuah akun diatur eksplisit (Aktif atau Mati) di form akun, pengaturan akun itu mengalahkan platform dan global.</p>
         <div className="actions" style={{ marginTop: 14 }}>
           <button className="btn btn-primary" onClick={save} disabled={!dirty || saving || !d.outputDirectory.trim() || bad(d.maxDurationMinutes, LIMITS.recordingDuration) || bad(d.maxConcurrentRecordings, LIMITS.recordingConcurrent)}>{saving ? 'Menyimpan…' : 'Save settings'}</button>
           <button className="btn" onClick={() => setForm(initial)} disabled={!dirty}>Discard changes</button>

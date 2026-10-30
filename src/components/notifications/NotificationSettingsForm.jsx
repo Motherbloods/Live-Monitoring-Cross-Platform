@@ -76,7 +76,7 @@ export default function NotificationSettingsForm() {
               <li key={key}><span>{label}</span><TriSelect value={ov[key]} label={`${label} untuk ${platformId}`} onChange={(v) => setOverride(key, v)} /></li>
             ))}
           </ul>
-          <p className="note">Pengaturan notifikasi pada form akun mengalahkan platform dan global untuk event live mulai dan berakhir.</p>
+          <p className="note">Jika sebuah akun diatur eksplisit (Aktif atau Mati) di form akun, pengaturan akun itu mengalahkan platform dan global.</p>
         </section>
 
         <div className="actions">
