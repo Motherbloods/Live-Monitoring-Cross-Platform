@@ -8,9 +8,7 @@ import Settings from '../pages/Settings.jsx'
 import LiveHistory from '../pages/LiveHistory.jsx'
 import Recordings from '../pages/Recordings.jsx'
 import Notifications from '../pages/Notifications.jsx'
-import Upcoming from '../pages/Upcoming.jsx'
-
-const upcoming = (title, stage) => ({ element: <Upcoming title={title} stage={stage} /> })
+import NotFound from '../pages/NotFound.jsx'
 
 export const router = createBrowserRouter([
   {
@@ -24,7 +22,8 @@ export const router = createBrowserRouter([
       { path: 'history', element: <LiveHistory /> },
       { path: 'recordings', element: <Recordings /> },
       { path: 'notifications', element: <Notifications /> },
-      { path: 'settings', element: <Settings /> }
+      { path: 'settings', element: <Settings /> },
+      { path: '*', element: <NotFound /> }
     ]
   }
 ])
