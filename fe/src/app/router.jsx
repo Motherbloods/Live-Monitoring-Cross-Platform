@@ -1,4 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
+import AuthGate from '../components/common/AuthGate.jsx'
+import Login from '../pages/Login.jsx'
 import DashboardLayout from '../components/layout/DashboardLayout.jsx'
 import Overview from '../pages/Overview.jsx'
 import LiveAccounts from '../pages/LiveAccounts.jsx'
@@ -11,9 +13,14 @@ import Notifications from '../pages/Notifications.jsx'
 import NotFound from '../pages/NotFound.jsx'
 
 export const router = createBrowserRouter([
+  { path: '/login', element: <Login /> },
   {
     path: '/',
-    element: <DashboardLayout />,
+    element: (
+      <AuthGate>
+        <DashboardLayout />
+      </AuthGate>
+    ),
     children: [
       { index: true, element: <Overview /> },
       { path: 'accounts', element: <LiveAccounts /> },
