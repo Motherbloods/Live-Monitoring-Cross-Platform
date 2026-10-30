@@ -42,6 +42,8 @@ export default function LiveAccounts() {
       }))
       .filter(({ a, st }) => {
         const needle = q.trim().toLowerCase()
+        if (!config.global.showOfflineAccounts && st === 'offline' && status === 'all') return false
+        if (!config.global.showUnknownAccounts && (st === 'unknown' || st === 'error') && status === 'all') return false
         if (needle && !a.username.toLowerCase().includes(needle) && !a.displayName.toLowerCase().includes(needle)) return false
         if (platform !== 'all' && a.platformId !== platform) return false
         if (status !== 'all' && st !== status) return false
