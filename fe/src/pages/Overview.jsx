@@ -46,8 +46,8 @@ function LiveCard({ account, live }) {
         </div>
         <p className="live-title">{live.title}</p>
         <div className="live-foot">
-          <span title="Jumlah penonton tersimulasi">{compact(live.viewers)} penonton <em>simulasi</em></span>
-          <a className="btn btn-small" href={account.profileUrl} target="_blank" rel="noreferrer">
+          <span>{live.viewers == null ? 'Penonton tidak tersedia' : `${compact(live.viewers)} penonton`}{live.simulated && <em> simulasi</em>}</span>
+          <a className="btn btn-small" href={account.platformId === 'tiktok' ? `${account.profileUrl.replace(/\/$/, '')}/live` : account.profileUrl} target="_blank" rel="noreferrer">
             Open live <ExternalLink size={12} aria-hidden />
           </a>
         </div>

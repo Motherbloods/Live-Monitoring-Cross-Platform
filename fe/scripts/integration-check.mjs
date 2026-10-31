@@ -27,7 +27,7 @@ globalThis.fetch = async (url, options = {}) => {
   return response
 }
 
-const server = spawn('node', ['src/index.js'], { cwd: path.resolve('..', 'server'), env: { ...process.env, PORT: String(port), DB_FILE: dbFile, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD_HASH: await hashPassword(PASSWORD) }, stdio: 'ignore' })
+const server = spawn('node', ['src/index.js'], { cwd: path.resolve('..', 'server'), env: { ...process.env, PORT: String(port), DB_FILE: dbFile, TIKTOK_CHECKER: 'dummy', ADMIN_USERNAME: 'admin', ADMIN_PASSWORD_HASH: await hashPassword(PASSWORD) }, stdio: 'ignore' })
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 for (let i = 0; i < 30; i += 1) {
   try {
