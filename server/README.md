@@ -53,3 +53,32 @@ Cara kerjanya:
 - Percobaan login salah dibatasi: 5 kali per kombinasi IP dan username, 20 kali per IP, dalam 15 menit. Lewat dari itu server menjawab 429.
 - Untuk produksi lewat HTTPS isi `COOKIE_SECURE=true`. Jika server berada di belakang proxy (Nginx dan sejenisnya), isi `TRUST_PROXY=true` agar IP pengunjung terbaca benar.
 - Cookie `SameSite=Lax` bekerja jika frontend dan server berada di situs yang sama (misalnya `localhost` dengan port berbeda, atau subdomain dari domain yang sama). Jika dipisah domain berbeda, perlu penyesuaian.
+
+## Checker TikTok
+
+Checker TikTok memakai browser Chromium (Playwright) untuk membuka `https://www.tiktok.com/@username/live`, lalu membaca data `SIGI_STATE` dari halaman, dengan cara yang sama seperti skrip live recorder lama.
+
+Pemasangan sekali saja:
+
+```
+npm install
+npx playwright install chromium
+```
+
+Coba satu akun dulu sebelum dipakai penuh:
+
+```
+npm run try-tiktok -- username
+npm run try-tiktok -- username --dump
+```
+
+Perintah kedua menyimpan halaman ke `tiktok-dump.html` untuk diperiksa jika hasilnya tidak sesuai.
+
+Aturan:
+
+- Halaman tanpa data, data rusak, atau struktur tidak dikenali dianggap pemeriksaan gagal, bukan offline. Status akun tidak berubah, dan error tercatat di log service.
+- Request timeout TikTok default 45 detik (membuka halaman lebih lambat dari API biasa).
+- `TIKTOK_CHECKER=dummy` di `.env` mengembalikan checker TikTok ke data contoh. `SEED_DEMO=false` membuat database awal kosong (tanpa akun contoh); hapus `data/db.json` agar berlaku.
+- Platform lain masih memakai checker dummy.
+- Browser dibuka bersama dan dipakai ulang, lalu dimulai ulang setelah 300 halaman untuk menjaga memori.
+- Jangan terlalu rapat: setiap pemeriksaan membuka satu halaman penuh. Untuk puluhan akun TikTok, interval 120 sampai 180 detik jauh lebih aman daripada 30 detik.
