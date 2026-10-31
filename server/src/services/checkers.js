@@ -1,3 +1,5 @@
+import { tiktokChecker } from './tiktok.js'
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const dummyChecker = async (account, previous) => {
@@ -11,8 +13,12 @@ const dummyChecker = async (account, previous) => {
   return { status: 'offline', live: null }
 }
 
+const tiktok = (account, previous) => (process.env.TIKTOK_CHECKER === 'dummy' ? dummyChecker(account, previous) : tiktokChecker(account, previous))
+
+export const checkerModes = () => ({ tiktok: process.env.TIKTOK_CHECKER === 'dummy' ? 'dummy' : 'real', shopee: 'dummy', youtube: 'dummy', instagram: 'dummy', twitch: 'dummy' })
+
 export const checkers = {
-  tiktok: dummyChecker,
+  tiktok,
   shopee: dummyChecker,
   youtube: dummyChecker,
   instagram: dummyChecker,

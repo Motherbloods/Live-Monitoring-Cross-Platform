@@ -48,7 +48,7 @@ export const DEFAULT_CONFIG = {
     recordingDefaults: { autoRecording: false, outputDirectory: 'recordings', outputFormat: 'ts', maxDurationMinutes: 240, maxConcurrentRecordings: 3, retryOnFailure: true }
   },
   platforms: {
-    tiktok: platformDefaults(30),
+    tiktok: { ...platformDefaults(30), requestTimeoutMs: 45000 },
     shopee: platformDefaults(null),
     youtube: platformDefaults(null),
     instagram: platformDefaults(120),
