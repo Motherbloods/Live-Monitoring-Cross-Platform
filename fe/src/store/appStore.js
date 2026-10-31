@@ -35,6 +35,7 @@ export const useAppStore = create((set, get) => ({
   recordings: remote ? [] : mockRecordings,
   connection: remote ? 'connecting' : 'mock',
   auth: remote ? 'checking' : 'none',
+  engine: {},
   user: null,
   ready: !remote,
   lastRefresh: new Date().toISOString(),

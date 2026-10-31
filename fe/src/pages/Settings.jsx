@@ -49,7 +49,7 @@ function Row({ label, hint, children }) {
 }
 
 export default function Settings() {
-  const { connection, config, draft, accounts, savedAt, recovered, setDraftGlobal, saveDraft, discardDraft, resetConfig, applyImportedConfig, pushToast } = useAppStore()
+  const { connection, engine, config, draft, accounts, savedAt, recovered, setDraftGlobal, saveDraft, discardDraft, resetConfig, applyImportedConfig, pushToast } = useAppStore()
   const g = draft.global
   const [saving, setSaving] = useState(false)
   const [pending, setPending] = useState(null)
@@ -188,7 +188,7 @@ export default function Settings() {
         <dl className="health">
           <div><dt>Configuration storage</dt><dd>{API_MODE === 'http' ? 'Server' : 'Local (browser)'}</dd></div>
           <div><dt>Backend connection</dt><dd>{API_MODE === 'http' ? (connection === 'online' ? `Connected (${API_URL})` : 'Unreachable') : 'Not configured'}</dd></div>
-          <div><dt>Monitoring engine</dt><dd>{API_MODE === 'http' ? 'Server (checker dummy)' : 'Mock mode'}</dd></div>
+          <div><dt>Monitoring engine</dt><dd>{API_MODE === 'http' ? `Server (${Object.entries(engine).filter(([, m]) => m === 'real').map(([id]) => id).join(', ') || 'semua'} ${Object.values(engine).some((m) => m === 'real') ? 'nyata, lainnya dummy' : 'dummy'})` : 'Mock mode'}</dd></div>
           <div><dt>Last local configuration save</dt><dd>{savedAt ? clock(savedAt) : 'Belum pernah'}</dd></div>
         </dl>
       </section>

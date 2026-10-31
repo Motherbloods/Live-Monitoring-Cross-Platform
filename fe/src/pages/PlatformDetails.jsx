@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus, Power, RotateCw, ScanSearch } from 'lucide-react'
+import { API_MODE } from '../api/client.js'
 import { useAppStore } from '../store/appStore.js'
 import { PLATFORMS } from '../config/defaults.js'
 import { getDisplayStatus, getEligibility, getPlatformSummary, getServiceStatus, resolveEffectiveConfig } from '../utils/effectiveConfig.js'
@@ -11,7 +12,7 @@ import ServiceLogs from '../components/platforms/ServiceLogs.jsx'
 
 export default function PlatformDetails() {
   const { platformId } = useParams()
-  const { accounts, runtime, platformRuntime, config, setServiceEnabled, restartPlatform, checkPlatform } = useAppStore()
+  const { engine, accounts, runtime, platformRuntime, config, setServiceEnabled, restartPlatform, checkPlatform } = useAppStore()
   const [busy, setBusy] = useState('')
   const platform = PLATFORMS.find((p) => p.id === platformId)
 
@@ -75,6 +76,7 @@ export default function PlatformDetails() {
               <div><dt>Monitoring platform</dt><dd>{pc.monitoringEnabled ? 'Enabled' : 'Disabled'}</dd></div>
               <div><dt>Sukses terakhir</dt><dd>{ago(rt.lastSuccess)}</dd></div>
               <div><dt>Error terakhir</dt><dd>{rt.lastError || '—'}</dd></div>
+              {API_MODE === 'http' && <div><dt>Checker</dt><dd>{engine[platformId] === 'real' ? 'Nyata' : 'Dummy (data contoh)'}</dd></div>}
               <div><dt>Retry count</dt><dd>{rt.retryCount}</dd></div>
               <div><dt>Jadwal berikutnya</dt><dd>{schedulable ? `tiap ${interval(eff)} (simulasi)` : '—'}</dd></div>
               <div><dt>Akun memenuhi syarat</dt><dd>{sum.eligible} dari {sum.total}</dd></div>
