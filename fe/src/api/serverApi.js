@@ -13,7 +13,7 @@ export const serverApi = {
       http('GET', '/recordings'),
       http('GET', '/logs')
     ])
-    return { accounts: accounts.accounts, platforms: platforms.platforms, config: config.config, savedAt: config.savedAt, history: history.history, recordings: recordings.recordings, logs: logs.logs }
+    return { accounts: accounts.accounts, platforms: platforms.platforms, config: config.config, savedAt: config.savedAt, engine: config.engine, history: history.history, recordings: recordings.recordings, logs: logs.logs }
   },
   createAccount: (body) => http('POST', '/accounts', body),
   updateAccount: (id, body) => http('PATCH', `/accounts/${id}`, body),

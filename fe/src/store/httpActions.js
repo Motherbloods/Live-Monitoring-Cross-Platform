@@ -94,6 +94,7 @@ export const createHttpActions = (set, get) => {
           config: snap.config,
           draft: JSON.stringify(s.draft) === JSON.stringify(s.config) ? snap.config : s.draft,
           savedAt: snap.savedAt,
+          engine: snap.engine || {},
           history: snap.history,
           recordings: snap.recordings,
           logs: snap.logs,
