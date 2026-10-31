@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { getState, persist, addLog } from '../store/db.js'
+import { checkerModes } from '../services/checkers.js'
 import { mergeConfigPatch, validateConfig } from '../config/validation.js'
 import { badRequest } from '../utils/http.js'
 
@@ -7,7 +8,7 @@ const router = Router()
 
 router.get('/', (req, res) => {
   const { config, configSavedAt } = getState()
-  res.json({ config, savedAt: configSavedAt })
+  res.json({ config, savedAt: configSavedAt, engine: checkerModes() })
 })
 
 router.patch('/', (req, res) => {
