@@ -2,7 +2,8 @@ import { Router } from 'express'
 import { getState, persist } from '../store/db.js'
 import { PLATFORM_IDS } from '../config/defaults.js'
 import { mergeConfigPatch, validateConfig } from '../config/validation.js'
-import { badRequest } from '../utils/http.js'
+import { isConfigured, sendMessage } from '../services/telegram.js'
+import { HttpError, badRequest, wrap } from '../utils/http.js'
 
 export const history = Router()
 export const recordings = Router()
@@ -24,6 +25,16 @@ const settings = () => {
     overrides: Object.fromEntries(PLATFORM_IDS.map((id) => [id, config.platforms[id].notificationOverrides]))
   }
 }
+
+notifications.post('/test', wrap(async (req, res) => {
+  if (!isConfigured()) throw new HttpError(409, 'TELEGRAM_NOT_CONFIGURED', 'Telegram belum dikonfigurasi di server (TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID).')
+  try {
+    await sendMessage('Live Monitor: notifikasi uji berhasil dikirim.')
+  } catch (error) {
+    throw new HttpError(502, 'TELEGRAM_FAILED', error.message)
+  }
+  res.json({ ok: true })
+}))
 
 notifications.get('/settings', (req, res) => res.json(settings()))
 
