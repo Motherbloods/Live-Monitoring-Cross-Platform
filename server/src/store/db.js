@@ -50,7 +50,8 @@ const seed = () => {
     logs: [],
     codes: [],
     subscribers: [],
-    subscriptionSettings: clone(DEFAULT_SUBSCRIPTION_SETTINGS)
+    subscriptionSettings: clone(DEFAULT_SUBSCRIPTION_SETTINGS),
+    botOffset: 0
   }
 }
 
@@ -76,6 +77,7 @@ const migrate = (loaded) => {
   }
   loaded.codes = loaded.codes || []
   loaded.subscribers = loaded.subscribers || []
+  loaded.botOffset = Number(loaded.botOffset) || 0
   loaded.subscriptionSettings = { ...clone(DEFAULT_SUBSCRIPTION_SETTINGS), ...loaded.subscriptionSettings }
   return loaded
 }
