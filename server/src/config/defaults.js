@@ -1,11 +1,12 @@
-export const PLATFORM_IDS = ['tiktok', 'shopee', 'youtube', 'instagram', 'twitch']
+export const PLATFORM_IDS = ['tiktok', 'shopee', 'youtube', 'instagram', 'twitch', 'bigo']
 
 export const HOST_HINTS = {
   tiktok: 'tiktok.com',
   shopee: 'shopee.co.id',
   youtube: 'youtube.com',
   instagram: 'instagram.com',
-  twitch: 'twitch.tv'
+  twitch: 'twitch.tv',
+  bigo: 'bigo.tv'
 }
 
 export const LIMITS = {
@@ -52,6 +53,7 @@ export const DEFAULT_CONFIG = {
     shopee: platformDefaults(null),
     youtube: platformDefaults(null),
     instagram: platformDefaults(120),
-    twitch: platformDefaults(null)
+    twitch: platformDefaults(null),
+    bigo: platformDefaults(180)
   }
 }

@@ -14,7 +14,7 @@ export const usernameFromUrl = (url, platformId) => {
   return (segs[0] || '').replace(/^@/, '')
 }
 
-const PROFILE_BASES = { tiktok: 'https://www.tiktok.com/@', shopee: 'https://shopee.co.id/', youtube: 'https://www.youtube.com/@', instagram: 'https://www.instagram.com/', twitch: 'https://www.twitch.tv/' }
+const PROFILE_BASES = { tiktok: 'https://www.tiktok.com/@', shopee: 'https://shopee.co.id/', youtube: 'https://www.youtube.com/@', instagram: 'https://www.instagram.com/', twitch: 'https://www.twitch.tv/', bigo: 'https://www.bigo.tv/user/' }
 
 export const defaultProfileUrl = (platformId, username) => (platformId === 'youtube' && /^UC[A-Za-z0-9_-]{22}$/.test(username) ? `https://www.youtube.com/channel/${username}` : `${PROFILE_BASES[platformId]}${username}`)
 
@@ -92,6 +92,7 @@ export const validateAccountInput = (input, accounts, editingId = null) => {
   if (!/^[A-Za-z0-9._-]{2,40}$/.test(username)) errors.push('username harus 2-40 karakter: huruf, angka, titik, garis bawah, atau strip.')
   else if (platformId === 'twitch' && !/^[A-Za-z0-9_]{4,25}$/.test(username)) errors.push('username Twitch harus 4-25 karakter: huruf, angka, atau garis bawah.')
   else if (platformId === 'youtube' && !/^(UC[A-Za-z0-9_-]{22}|[A-Za-z0-9._-]{3,30})$/.test(username)) errors.push('username YouTube harus handle (3-30 karakter) atau ID channel yang diawali UC.')
+  else if (platformId === 'bigo' && !/^[A-Za-z0-9_]{2,40}$/.test(username)) errors.push('username Bigo harus 2-40 karakter: huruf, angka, atau garis bawah.')
   else if (platformId === 'tiktok' && !/^[A-Za-z0-9._]{2,24}$/.test(username)) errors.push('username TikTok harus 2-24 karakter: huruf, angka, titik, atau garis bawah.')
   if (profileUrl && PLATFORM_IDS.includes(platformId)) {
     try {
