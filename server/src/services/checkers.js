@@ -1,6 +1,7 @@
 import { tiktokChecker } from './tiktok.js'
 import { twitchChecker } from './twitch.js'
 import { youtubeChecker } from './youtube.js'
+import { bigoChecker } from './bigo.js'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -15,18 +16,21 @@ const dummyChecker = async (account, previous) => {
   return { status: 'offline', live: null }
 }
 
+const bigo = (account, previous) => (process.env.BIGO_CHECKER === 'dummy' ? dummyChecker(account, previous) : bigoChecker(account, previous))
+
 const youtube = (account, previous) => (process.env.YOUTUBE_CHECKER === 'dummy' ? dummyChecker(account, previous) : youtubeChecker(account, previous))
 
 const twitch = (account, previous) => (process.env.TWITCH_CHECKER === 'dummy' ? dummyChecker(account, previous) : twitchChecker(account, previous))
 
 const tiktok = (account, previous) => (process.env.TIKTOK_CHECKER === 'dummy' ? dummyChecker(account, previous) : tiktokChecker(account, previous))
 
-export const checkerModes = () => ({ tiktok: process.env.TIKTOK_CHECKER === 'dummy' ? 'dummy' : 'real', shopee: 'dummy', youtube: process.env.YOUTUBE_CHECKER === 'dummy' ? 'dummy' : 'real', instagram: 'dummy', twitch: process.env.TWITCH_CHECKER === 'dummy' ? 'dummy' : 'real' })
+export const checkerModes = () => ({ tiktok: process.env.TIKTOK_CHECKER === 'dummy' ? 'dummy' : 'real', shopee: 'dummy', youtube: process.env.YOUTUBE_CHECKER === 'dummy' ? 'dummy' : 'real', instagram: 'dummy', twitch: process.env.TWITCH_CHECKER === 'dummy' ? 'dummy' : 'real', bigo: process.env.BIGO_CHECKER === 'dummy' ? 'dummy' : 'real' })
 
 export const checkers = {
   tiktok,
   shopee: dummyChecker,
   youtube,
   instagram: dummyChecker,
-  twitch
+  twitch,
+  bigo
 }

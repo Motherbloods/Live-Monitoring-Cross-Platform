@@ -1,7 +1,7 @@
 import { getState } from '../store/db.js'
 import { enqueue, isConfigured } from './telegram.js'
 
-const NAMES = { tiktok: 'TikTok', shopee: 'Shopee Live', youtube: 'YouTube Live', instagram: 'Instagram Live', twitch: 'Twitch' }
+const NAMES = { tiktok: 'TikTok', shopee: 'Shopee Live', youtube: 'YouTube Live', instagram: 'Instagram Live', twitch: 'Twitch', bigo: 'Bigo Live' }
 const COOLDOWN_MS = 10 * 60 * 1000
 const lastSent = new Map()
 
