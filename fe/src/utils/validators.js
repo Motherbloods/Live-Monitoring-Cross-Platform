@@ -36,6 +36,7 @@ export const validateAccount = (form, accounts, editingId = null) => {
   if (!errors.username && shown) {
     if (form.platformId === 'twitch' && !/^[A-Za-z0-9_]{4,25}$/.test(shown)) errors.username = 'Username Twitch 4–25 karakter: huruf, angka, atau garis bawah.'
     if (form.platformId === 'youtube' && !/^(UC[A-Za-z0-9_-]{22}|[A-Za-z0-9._-]{3,30})$/.test(shown)) errors.username = 'Username YouTube: handle 3–30 karakter, atau ID channel yang diawali UC.'
+    if (form.platformId === 'bigo' && !/^[A-Za-z0-9_]{2,40}$/.test(shown)) errors.username = 'Username Bigo 2–40 karakter: huruf, angka, atau garis bawah.'
     if (form.platformId === 'tiktok' && !/^[A-Za-z0-9._]{2,24}$/.test(shown)) errors.username = 'Username TikTok 2–24 karakter: huruf, angka, titik, atau garis bawah.'
   }
   if (form.useCustomCheckInterval) {

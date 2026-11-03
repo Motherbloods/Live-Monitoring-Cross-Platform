@@ -1,5 +1,6 @@
 import { setUnauthorizedHandler } from '../api/client.js'
 import { serverApi } from '../api/serverApi.js'
+import { PLATFORM_IDS } from '../config/defaults.js'
 import { validateConfig } from '../config/configurationManager.js'
 import { setTimezone } from '../utils/formatters.js'
 
@@ -20,7 +21,7 @@ const accountBody = (form) => ({
   notes: form.notes
 })
 
-const WAITING = Object.fromEntries(['tiktok', 'shopee', 'youtube', 'instagram', 'twitch'].map((id) => [id, { status: 'starting', lastSuccess: null, lastError: null, retryCount: 0 }]))
+const WAITING = Object.fromEntries(PLATFORM_IDS.map((id) => [id, { status: 'starting', lastSuccess: null, lastError: null, retryCount: 0 }]))
 
 export const createHttpActions = (set, get) => {
   setUnauthorizedHandler(() => {

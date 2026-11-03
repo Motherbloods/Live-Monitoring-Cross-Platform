@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { PLATFORM_IDS } from '../config/defaults.js'
 import { API_MODE } from '../api/client.js'
 import { createHttpActions } from './httpActions.js'
 import { accountsApi } from '../api/accountsApi.js'
@@ -16,7 +17,7 @@ import { mockAccounts, mockActivities, mockPlatformRuntime, mockRuntime } from '
 import { getEligibility } from '../utils/effectiveConfig.js'
 
 const remote = API_MODE === 'http'
-const waiting = Object.fromEntries(['tiktok', 'shopee', 'youtube', 'instagram', 'twitch'].map((id) => [id, { status: 'starting', lastSuccess: null, lastError: null, retryCount: 0 }]))
+const waiting = Object.fromEntries(PLATFORM_IDS.map((id) => [id, { status: 'starting', lastSuccess: null, lastError: null, retryCount: 0 }]))
 const initial = loadConfig()
 setTimezone(initial.config.global.timezone)
 let toastId = 0
