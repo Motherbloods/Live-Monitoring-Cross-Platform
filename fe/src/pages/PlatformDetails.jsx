@@ -77,6 +77,7 @@ export default function PlatformDetails() {
               <div><dt>Monitoring platform</dt><dd>{pc.monitoringEnabled ? 'Enabled' : 'Disabled'}</dd></div>
               <div><dt>Sukses terakhir</dt><dd>{ago(rt.lastSuccess)}</dd></div>
               <div><dt>Error terakhir</dt><dd>{rt.lastError || '—'}</dd></div>
+              {API_MODE === 'http' && platformId === 'youtube' && integrations.youtube?.configured && <div><dt>Kuota API hari ini</dt><dd>{(integrations.youtube.unitsToday ?? 0).toLocaleString('id-ID')} dari 10.000 unit</dd></div>}
               {API_MODE === 'http' && <div><dt>Checker</dt><dd>{engine[platformId] === 'real' ? 'Nyata' : 'Dummy (data contoh)'}</dd></div>}
               <div><dt>Retry count</dt><dd>{rt.retryCount}</dd></div>
               <div><dt>Jadwal berikutnya</dt><dd>{schedulable ? `tiap ${interval(eff)} (simulasi)` : '—'}</dd></div>
