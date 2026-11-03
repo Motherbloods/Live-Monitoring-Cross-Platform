@@ -201,6 +201,8 @@ await test('langganan: kode dibuat sekali tampil, ringkasan tanpa kode asli, bat
   await serverApi.revokeCode(made.codes[0].id)
   await assert.rejects(() => serverApi.revokeCode(made.codes[0].id), /belum dipakai/)
   await assert.rejects(() => serverApi.createCodes({ count: 0 }), /Jumlah kode/)
+  assert.equal(ov.bot.configured, false)
+  assert.equal(ov.bot.running, false)
 })
 
 await test('server mati membuat koneksi offline tanpa menghapus data terakhir', async () => {

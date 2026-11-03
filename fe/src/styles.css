@@ -427,3 +427,7 @@ form.search { margin-left: 12px; }
   .code-list small { grid-column: 1; }
   .sub-detail { grid-template-columns: 1fr; gap: 20px; }
 }
+
+.bot-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-radius: 10px; margin-bottom: 20px; font-size: 13.5px; }
+.bot-line.is-ok { background: rgba(63, 185, 127, 0.12); }
+.bot-line.is-warn { background: rgba(232, 165, 49, 0.14); color: var(--warn); }
