@@ -255,3 +255,36 @@ Notifikasi live dikirim saat status berubah menjadi live, jadi pembeli yang mena
 - Data live yang masih segar (pemeriksaan sukses terakhir dalam 5 menit atau 3 kali interval, mana yang lebih lama): pembeli langsung dikabari dengan jam mulai asli siaran, tanpa memeriksa ulang.
 - Akun baru atau datanya sudah usang: server memeriksanya saat itu juga. Kalau ternyata live, pembeli dikabari satu kali. Kalau pemeriksaan gagal, tidak ada pesan, dan status lama tidak dipercaya.
 - Pembeli lain yang sudah mengikuti akun itu tidak dikirimi pesan ganda.
+
+## Penyimpanan data: MongoDB
+
+Server menyimpan semua data (akun, status, riwayat live, log, kode, pelanggan, pengaturan) di **MongoDB**. Tanpa `MONGODB_URI`, server memakai file `data/db.json` (hanya untuk percobaan lokal). Untuk pemakaian sungguhan, isi:
+
+```
+MONGODB_URI=mongodb://127.0.0.1:27017
+MONGODB_DB=live_monitor
+```
+
+Menjalankan MongoDB:
+
+- Docker (hanya bisa diakses dari komputer itu sendiri):
+
+```
+docker run -d --name live-monitor-mongo --restart unless-stopped -p 127.0.0.1:27017:27017 -v live_monitor_mongo:/data/db mongo:7
+```
+
+- Atau pakai layanan terkelola seperti MongoDB Atlas (ada paket gratis), lalu tempel URI sambungannya.
+- Jika MongoDB dapat diakses dari jaringan, **wajib** pakai autentikasi, misalnya `MONGO_INITDB_ROOT_USERNAME` dan `MONGO_INITDB_ROOT_PASSWORD` pada Docker, dengan URI `mongodb://pengguna:sandi@127.0.0.1:27017/?authSource=admin`. Jangan membuka port MongoDB ke internet.
+
+Cara kerjanya:
+
+- Saat dimulai, server memuat data dari MongoDB ke memori, lalu menulis perubahan ke MongoDB: hanya dokumen yang berubah yang ditulis (satu dokumen per akun, pelanggan, kode, sesi live, dan log). Penulisan biasa tertunda sekitar 0,3 detik, sedangkan pembuatan dan penukaran kode ditulis seketika.
+- Saat server dihentikan dengan benar (Ctrl+C atau `SIGTERM`), semua perubahan ditulis dulu sebelum keluar. Jika server mati mendadak, perubahan dalam sepersekian detik terakhir bisa hilang.
+- Jika MongoDB tidak terjangkau saat server dimulai, server berhenti dengan pesan jelas (tidak diam-diam memakai file). Jika terputus saat berjalan, server mencoba menulis lagi pada perubahan berikutnya, dan Settings menampilkan peringatan.
+- Pertama kali dijalankan dengan MongoDB yang masih kosong, jika `data/db.json` lama masih ada, isinya dipindahkan otomatis ke MongoDB, lalu file lama diganti namanya menjadi `db.json.sudah-dipindah` sebagai cadangan.
+- Kode langganan hanya disimpan sebagai hash. Indeks unik mencegah dua pelanggan dengan chat Telegram yang sama dan dua kode dengan hash yang sama.
+- Cadangan: `mongodump --uri "mongodb://..." --db live_monitor --out cadangan/`.
+
+Batasan penting: data aktif disimpan di memori satu server. **Jangan jalankan dua server dengan database yang sama** karena keduanya akan saling menimpa. Untuk beberapa server, pembagian tugasnya perlu dirancang dulu (misalnya tiap server memeriksa kelompok akun berbeda, sedangkan kode dan pelanggan dibaca langsung dari MongoDB).
+
+Uji penyimpanan MongoDB hanya berjalan jika Anda menyediakan MongoDB sungguhan: `MONGO_TEST_URI=mongodb://127.0.0.1:27017 npm test` (database uji dibuat dengan nama acak dan dihapus sesudahnya).
