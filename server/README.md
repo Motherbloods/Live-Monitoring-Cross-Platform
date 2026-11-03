@@ -131,3 +131,40 @@ Aturan:
 - Username Twitch harus 4-25 karakter: huruf, angka, atau garis bawah.
 - Client Secret tidak pernah dikirim ke browser dan disamarkan di pesan error.
 - `TWITCH_CHECKER=dummy` mengembalikan Twitch ke data contoh.
+
+## Checker YouTube
+
+Checker YouTube memakai YouTube Data API v3 dengan API key (data publik, tanpa login Google).
+
+1. Di https://console.cloud.google.com buat proyek, aktifkan **YouTube Data API v3**, lalu buat **API key** (Credentials, Create credentials, API key). Disarankan membatasi key hanya untuk YouTube Data API v3.
+2. Isi di `.env` server:
+
+```
+YOUTUBE_CHECKER=real
+YOUTUBE_API_KEY=...
+```
+
+3. Coba satu channel:
+
+```
+npm run try-youtube -- NamaHandle
+```
+
+Akun YouTube diisi dengan handle (tanpa @) atau ID channel yang diawali `UC`. Menempel URL profil `https://www.youtube.com/@handle` atau `https://www.youtube.com/channel/UC...` juga bisa. URL lama berbentuk `/c/nama` atau `/user/nama` tidak didukung.
+
+Kuota: proyek Google mendapat 10.000 unit per hari secara default, dibagi semua key di proyek itu. Pencarian (`search.list`) memakan 100 unit per panggilan sehingga tidak dipakai di sini. Checker ini hanya memakai pembacaan 1 unit:
+
+- Daftar 5 unggahan terbaru channel (1 unit), lalu detail video yang belum diketahui statusnya (1 unit). Video yang sudah pasti bukan live disimpan, jadi pemeriksaan berikutnya yang tidak ada video baru hanya 1 unit.
+- Akun yang sedang live hanya 1 unit per pemeriksaan (memastikan video itu masih live).
+- Handle diubah menjadi ID channel sekali (1 unit), lalu disimpan di memori sampai server di-restart.
+
+Perkiraan: pemeriksaan tiap 60 detik menghabiskan sekitar 1.440 unit per akun per hari, jadi default 10.000 unit hanya cukup untuk sekitar 6 akun. Interval 180 detik cukup untuk sekitar 20 akun. Pemakaian hari ini tampil di halaman detail platform YouTube.
+
+Aturan:
+
+- Kuota habis: pemeriksaan gagal dengan pesan jelas dan berhenti memanggil YouTube sampai reset (tengah malam Waktu Pasifik). Status akun tidak berubah.
+- API key salah, API belum diaktifkan, dan channel tidak ditemukan menjadi pesan error di log. Status akun tidak berubah.
+- API key tidak pernah dikirim ke browser dan disamarkan di pesan error.
+- Jika channel memiliki beberapa siaran live bersamaan, yang penontonnya terbanyak yang dipakai.
+- `YOUTUBE_CHECKER=dummy` mengembalikan YouTube ke data contoh.
+- Perilaku live yang belum pernah diuji pada YouTube sungguhan: siaran live yang baru mulai harus muncul di daftar unggahan channel. Jika pada channel Anda tidak muncul, kabari agar metodenya diganti.
