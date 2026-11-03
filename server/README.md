@@ -233,3 +233,17 @@ Keamanan dan aturan:
 - Bot memakai long polling, jadi tidak butuh alamat publik. Posisi pesan terakhir disimpan, sehingga pesan tidak diproses dua kali setelah server di-restart.
 - Jika token bot dipakai program lain yang juga membaca pesan, status bot menampilkan peringatan dan bot mencoba lagi tiap 30 detik.
 - Pengiriman notifikasi live ke pembeli belum aktif di tahap ini (tahap 3).
+
+## Notifikasi ke pelanggan
+
+Saat akun yang dipantau berubah dari tidak live menjadi live, server mengirim pesan ke semua pelanggan yang **aktif** dan memilih akun itu lewat bot pembeli. Pesan "live berakhir" hanya untuk pelanggan yang menyalakannya (`/notif_selesai on`). Notifikasi pelanggan berjalan terpisah dari pengaturan notifikasi admin di halaman Notifications.
+
+Cara kerja:
+
+- **Pengirim** memakai antrean sendiri: maksimal 25 pesan per detik secara keseluruhan dan 1 pesan per 1,1 detik per chat, mengikuti batas Telegram. Hingga 5 pesan dikirim bersamaan.
+- Jika Telegram menjawab "terlalu cepat" (429), pesan dicoba ulang setelah waktu yang diminta. Gangguan jaringan dicoba sampai 3 kali.
+- Jika pelanggan memblokir bot (atau chat tidak ditemukan), pelanggan ditandai **Bot diblokir** di halaman Subscribers dan tidak dikirimi apa pun lagi. Saat ia menulis ke bot lagi, tandanya hilang otomatis.
+- **Pengingat**: 3 hari sebelum masa aktif habis, pelanggan dikirimi pengingat sekali per tanggal habis (tidak dikirim jika langganan baru saja dibeli atau diperpanjang kurang dari 12 jam).
+- **Masa aktif habis**: pelanggan dikabari sekali, notifikasi berhenti, dan akun pilihannya tetap tersimpan. Akun milik pelanggan yang sudah tidak diikuti siapa pun dijeda otomatis. Saat pelanggan memperpanjang dengan kode baru, pemeriksaannya aktif kembali.
+- Pemeriksaan masa aktif berjalan tiap 10 menit dan saat server dimulai.
+- Statistik antrean (menunggu, terkirim, gagal sejak server dijalankan) tampil di halaman Subscribers.
