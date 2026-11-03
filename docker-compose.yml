@@ -1,0 +1,73 @@
+name: live-monitor
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: live-monitor-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - live_monitor_mongo:/data/db
+    networks:
+      - live-monitor-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "-u", "${MONGO_USER}", "-p", "${MONGO_PASSWORD}", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  api:
+    build:
+      context: ./server
+    image: live-monitor-api:latest
+    container_name: live-monitor-api
+    init: true
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - ${ENV_FILE:-/opt/live-monitor/.env}
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      MONGODB_URI: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/?authSource=admin
+      MONGODB_DB: live_monitor
+      COOKIE_SECURE: "true"
+      SEED_DEMO: "false"
+      BIGO_SESSION_FILE: /app/data/bigo-session.json
+    volumes:
+      - ${DATA_DIR:-/opt/live-monitor/data}:/app/data:ro
+    networks:
+      - live-monitor-net
+
+  web:
+    build:
+      context: ./fe
+      args:
+        VITE_API_URL: same-origin
+    image: live-monitor:latest
+    container_name: live-monitor
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_UPSTREAM: http://live-monitor-api:4000
+    ports:
+      - "127.0.0.1:${WEB_PORT:-5177}:80"
+    networks:
+      - live-monitor-net
+      - n8n-network
+
+networks:
+  live-monitor-net:
+    driver: bridge
+  n8n-network:
+    external: true
+
+volumes:
+  live_monitor_mongo:
