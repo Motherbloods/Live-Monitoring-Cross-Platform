@@ -61,9 +61,22 @@ export const persistNow = () => {
   fs.renameSync(tmp, file())
 }
 
+const migrate = (loaded) => {
+  const defaults = clone(DEFAULT_CONFIG)
+  loaded.config = loaded.config || defaults
+  loaded.config.global = { ...defaults.global, ...loaded.config.global }
+  loaded.config.platforms = loaded.config.platforms || {}
+  loaded.platformRuntime = loaded.platformRuntime || {}
+  for (const id of Object.keys(defaults.platforms)) {
+    loaded.config.platforms[id] = { ...defaults.platforms[id], ...loaded.config.platforms[id] }
+    loaded.platformRuntime[id] = loaded.platformRuntime[id] || { status: 'online', lastSuccess: null, lastError: null, retryCount: 0 }
+  }
+  return loaded
+}
+
 export const loadState = () => {
   try {
-    state = JSON.parse(fs.readFileSync(file(), 'utf8'))
+    state = migrate(JSON.parse(fs.readFileSync(file(), 'utf8')))
     for (const r of Object.values(state.runtime)) r.checking = false
   } catch {
     state = seed()
