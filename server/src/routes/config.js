@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { getState, persist, addLog } from '../store/db.js'
 import { isConfigured } from '../services/telegram.js'
 import { twitchConfigured } from '../services/twitch.js'
+import { youtubeConfigured, youtubeUsage } from '../services/youtube.js'
 import { checkerModes } from '../services/checkers.js'
 import { mergeConfigPatch, validateConfig } from '../config/validation.js'
 import { badRequest } from '../utils/http.js'
@@ -10,7 +11,7 @@ const router = Router()
 
 router.get('/', (req, res) => {
   const { config, configSavedAt } = getState()
-  res.json({ config, savedAt: configSavedAt, engine: checkerModes(), integrations: { telegram: { configured: isConfigured() }, twitch: { configured: twitchConfigured() } } })
+  res.json({ config, savedAt: configSavedAt, engine: checkerModes(), integrations: { telegram: { configured: isConfigured() }, twitch: { configured: twitchConfigured() }, youtube: { configured: youtubeConfigured(), unitsToday: youtubeUsage().units } } })
 })
 
 router.patch('/', (req, res) => {
