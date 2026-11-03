@@ -190,6 +190,19 @@ await test('sesi yang kedaluwarsa di server memicu kembali ke anonim', async () 
   await S().hydrate()
 })
 
+await test('langganan: kode dibuat sekali tampil, ringkasan tanpa kode asli, batal, dan sesi anonim ditolak', async () => {
+  const { serverApi } = await import('../src/api/serverApi.js')
+  const made = await serverApi.createCodes({ label: 'uji', count: 2, maxAccounts: 3, durationDays: 30 })
+  assert.equal(made.codes.length, 2)
+  assert.match(made.codes[0].code, /^LM-/)
+  const ov = await serverApi.subscriptionOverview()
+  assert.equal(ov.stats.unusedCodes >= 2, true)
+  assert.equal(JSON.stringify(ov).includes(made.codes[0].code), false)
+  await serverApi.revokeCode(made.codes[0].id)
+  await assert.rejects(() => serverApi.revokeCode(made.codes[0].id), /belum dipakai/)
+  await assert.rejects(() => serverApi.createCodes({ count: 0 }), /Jumlah kode/)
+})
+
 await test('server mati membuat koneksi offline tanpa menghapus data terakhir', async () => {
   const count = S().accounts.length
   server.kill('SIGKILL')
