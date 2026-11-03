@@ -95,6 +95,7 @@ export const createHttpActions = (set, get) => {
           draft: JSON.stringify(s.draft) === JSON.stringify(s.config) ? snap.config : s.draft,
           savedAt: snap.savedAt,
           engine: snap.engine || {},
+          integrations: snap.integrations || {},
           history: snap.history,
           recordings: snap.recordings,
           logs: snap.logs,
@@ -109,6 +110,15 @@ export const createHttpActions = (set, get) => {
         const was = get().connection
         set({ connection: 'offline', ready: true })
         if (was !== 'offline') get().pushToast('Server tidak dapat dihubungi. Data yang tampil bisa kedaluwarsa.', 'warn')
+      }
+    },
+
+    sendTestNotification: async () => {
+      try {
+        await serverApi.testNotification()
+        get().pushToast('Notifikasi uji terkirim ke Telegram. Cek chat Anda.', 'ok')
+      } catch (error) {
+        get().pushToast(error.message, 'warn')
       }
     },
 

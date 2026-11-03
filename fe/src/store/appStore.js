@@ -36,6 +36,7 @@ export const useAppStore = create((set, get) => ({
   connection: remote ? 'connecting' : 'mock',
   auth: remote ? 'checking' : 'none',
   engine: {},
+  integrations: {},
   user: null,
   ready: !remote,
   lastRefresh: new Date().toISOString(),

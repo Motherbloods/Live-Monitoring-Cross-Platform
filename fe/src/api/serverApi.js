@@ -13,7 +13,7 @@ export const serverApi = {
       http('GET', '/recordings'),
       http('GET', '/logs')
     ])
-    return { accounts: accounts.accounts, platforms: platforms.platforms, config: config.config, savedAt: config.savedAt, engine: config.engine, history: history.history, recordings: recordings.recordings, logs: logs.logs }
+    return { accounts: accounts.accounts, platforms: platforms.platforms, config: config.config, savedAt: config.savedAt, engine: config.engine, integrations: config.integrations, history: history.history, recordings: recordings.recordings, logs: logs.logs }
   },
   createAccount: (body) => http('POST', '/accounts', body),
   updateAccount: (id, body) => http('PATCH', `/accounts/${id}`, body),
@@ -24,6 +24,7 @@ export const serverApi = {
   patchPlatform: (id, body) => http('PATCH', `/platforms/${id}/config`, body),
   checkPlatform: (id) => http('POST', `/platforms/${id}/check`),
   restartPlatform: (id) => http('POST', `/platforms/${id}/restart`),
+  testNotification: () => http('POST', '/notifications/test'),
   checkAll: () => http('POST', '/monitoring/check-all'),
   startMonitoring: () => http('POST', '/monitoring/start'),
   stopMonitoring: () => http('POST', '/monitoring/stop')
