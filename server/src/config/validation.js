@@ -3,6 +3,21 @@ import { DEFAULT_CONFIG, HOST_HINTS, LIMITS, PLATFORM_IDS } from './defaults.js'
 const inRange = (v, { min, max }) => Number.isFinite(v) && v >= min && v <= max
 const optional = (v, l) => v === null || v === undefined || inRange(v, l)
 
+const SEGMENTS = (url) => new URL(url).pathname.split('/').filter(Boolean)
+
+export const usernameFromUrl = (url, platformId) => {
+  const segs = SEGMENTS(url)
+  if (platformId === 'youtube') {
+    if (segs[0] === 'channel') return segs[1] || ''
+    return segs[0]?.startsWith('@') ? segs[0].slice(1) : ''
+  }
+  return (segs[0] || '').replace(/^@/, '')
+}
+
+const PROFILE_BASES = { tiktok: 'https://www.tiktok.com/@', shopee: 'https://shopee.co.id/', youtube: 'https://www.youtube.com/@', instagram: 'https://www.instagram.com/', twitch: 'https://www.twitch.tv/' }
+
+export const defaultProfileUrl = (platformId, username) => (platformId === 'youtube' && /^UC[A-Za-z0-9_-]{22}$/.test(username) ? `https://www.youtube.com/channel/${username}` : `${PROFILE_BASES[platformId]}${username}`)
+
 export const validateConfig = (cfg) => {
   const errors = []
   if (!cfg?.global || !cfg?.platforms) return ['Struktur konfigurasi tidak lengkap.']
@@ -69,13 +84,14 @@ export const validateAccountInput = (input, accounts, editingId = null) => {
   const profileUrl = typeof input.profileUrl === 'string' ? input.profileUrl.trim() : ''
   if (!username && profileUrl) {
     try {
-      username = (new URL(profileUrl).pathname.split('/').filter(Boolean)[0] || '').replace(/^@/, '')
+      username = usernameFromUrl(profileUrl, platformId)
     } catch {
       errors.push('profileUrl tidak valid.')
     }
   }
   if (!/^[A-Za-z0-9._-]{2,40}$/.test(username)) errors.push('username harus 2-40 karakter: huruf, angka, titik, garis bawah, atau strip.')
   else if (platformId === 'twitch' && !/^[A-Za-z0-9_]{4,25}$/.test(username)) errors.push('username Twitch harus 4-25 karakter: huruf, angka, atau garis bawah.')
+  else if (platformId === 'youtube' && !/^(UC[A-Za-z0-9_-]{22}|[A-Za-z0-9._-]{3,30})$/.test(username)) errors.push('username YouTube harus handle (3-30 karakter) atau ID channel yang diawali UC.')
   else if (platformId === 'tiktok' && !/^[A-Za-z0-9._]{2,24}$/.test(username)) errors.push('username TikTok harus 2-24 karakter: huruf, angka, titik, atau garis bawah.')
   if (profileUrl && PLATFORM_IDS.includes(platformId)) {
     try {

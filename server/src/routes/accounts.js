@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { emptyRuntime, getState, persist, addLog } from '../store/db.js'
-import { validateAccountInput } from '../config/validation.js'
+import { defaultProfileUrl, validateAccountInput } from '../config/validation.js'
 import { getEligibility, resolveEffective } from '../utils/effectiveConfig.js'
 import { checkAccount, nextCheckAt } from '../services/monitor.js'
 import { HttpError, badRequest, wrap } from '../utils/http.js'
@@ -38,7 +38,7 @@ router.post('/', (req, res) => {
     platformId: input.platformId,
     username,
     displayName: (input.displayName || '').trim() || username,
-    profileUrl: input.profileUrl?.trim() || '',
+    profileUrl: input.profileUrl?.trim() || defaultProfileUrl(input.platformId, username),
     monitoringEnabled: input.monitoringEnabled ?? true,
     useCustomCheckInterval: Boolean(input.useCustomCheckInterval),
     customCheckIntervalSeconds: input.useCustomCheckInterval ? Number(input.customCheckIntervalSeconds) : null,
@@ -63,6 +63,7 @@ router.patch('/:id', (req, res) => {
   if (errors.length) throw badRequest(errors)
   Object.assign(account, merged, {
     username,
+    profileUrl: (merged.profileUrl || '').trim() || defaultProfileUrl(merged.platformId, username),
     displayName: (merged.displayName || '').trim() || username,
     customCheckIntervalSeconds: merged.useCustomCheckInterval ? Number(merged.customCheckIntervalSeconds) : null
   })
