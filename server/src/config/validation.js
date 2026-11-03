@@ -6,7 +6,12 @@ const optional = (v, l) => v === null || v === undefined || inRange(v, l)
 const SEGMENTS = (url) => new URL(url).pathname.split('/').filter(Boolean)
 
 export const usernameFromUrl = (url, platformId) => {
-  const segs = SEGMENTS(url)
+  let segs
+  try {
+    segs = SEGMENTS(url)
+  } catch {
+    return ''
+  }
   if (platformId === 'youtube') {
     if (segs[0] === 'channel') return segs[1] || ''
     return segs[0]?.startsWith('@') ? segs[0].slice(1) : ''

@@ -2,6 +2,7 @@ import { createHash, randomInt } from 'node:crypto'
 import { PLATFORM_IDS } from '../config/defaults.js'
 import { defaultProfileUrl, validateAccountInput } from '../config/validation.js'
 import { addLog, emptyRuntime, getState, persist } from '../store/db.js'
+import { botStatus } from './botStatus.js'
 import { HttpError } from '../utils/http.js'
 
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
@@ -117,7 +118,7 @@ export const getSubscriberByChat = (chatId) => getState().subscribers.find((s) =
 
 const findAccount = (platformId, username) => getState().accounts.find((a) => a.platformId === platformId && a.username.toLowerCase() === username.toLowerCase())
 
-export const addSelection = (subscriberId, platformId, rawUsername, { byAdmin = false } = {}) => {
+export const prepareSelection = (subscriberId, platformId, rawUsername, { byAdmin = false } = {}) => {
   const state = getState()
   const s = state.subscriptionSettings
   const sub = findSubscriber(subscriberId)
@@ -126,15 +127,21 @@ export const addSelection = (subscriberId, platformId, rawUsername, { byAdmin = 
   const { errors, username } = validateAccountInput({ platformId, username: String(rawUsername || '') }, [])
   if (errors.length) throw fail(400, 'VALIDATION_ERROR', errors[0])
   if (s.blocklist.includes(`${platformId}:${username.toLowerCase()}`)) throw fail(403, 'BLOCKED', 'Akun ini tidak dapat dipantau.')
-  let account = findAccount(platformId, username)
+  const account = findAccount(platformId, username)
   if (account && sub.selections.some((x) => x.accountId === account.id)) throw fail(409, 'ALREADY_SELECTED', 'Akun ini sudah ada di daftar Anda.')
   if (sub.selections.length >= sub.maxAccounts) throw fail(409, 'NO_SLOTS', `Jatah akun Anda habis (${sub.maxAccounts}). Hapus satu akun dulu.`)
-
   const monitored = state.accounts.filter((a) => a.platformId === platformId && a.monitoringEnabled).length
   const cap = s.platformCaps[platformId]
   const needsCapacity = !account || (!account.monitoringEnabled && account.origin === 'subscription')
   if (needsCapacity && cap && monitored >= cap) throw fail(409, 'CAPACITY_FULL', `Kapasitas pemantauan ${platformLabel(platformId)} sedang penuh. Coba lagi nanti.`)
+  return { sub, account, username, platformId }
+}
 
+export const addSelection = (subscriberId, platformId, rawUsername, options = {}) => {
+  const state = getState()
+  const prepared = prepareSelection(subscriberId, platformId, rawUsername, options)
+  const { sub, username } = prepared
+  let { account } = prepared
   if (!account) {
     account = { id: newId('acc'), platformId, username, displayName: username, profileUrl: defaultProfileUrl(platformId, username), monitoringEnabled: true, useCustomCheckInterval: false, customCheckIntervalSeconds: null, autoRecording: null, notifyEnabled: null, notifyOnStart: null, notifyOnEnd: null, notes: '', origin: 'subscription' }
     state.accounts.unshift(account)
@@ -228,6 +235,7 @@ export const validateSettings = (input, current) => {
 
 export const overview = () => {
   const state = getState()
+  const bot = botStatus()
   const subs = state.subscribers.map((sub) => ({
     ...sub,
     active: isActive(sub),
@@ -239,6 +247,7 @@ export const overview = () => {
   }))
   return {
     settings: state.subscriptionSettings,
+    bot,
     codes: state.codes.map(publicCode),
     subscribers: subs,
     stats: {
