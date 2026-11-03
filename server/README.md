@@ -207,3 +207,29 @@ Konsep:
 - **Pengaturan**: platform yang boleh dipilih, kapasitas total per platform, batas penggantian akun per minggu, daftar blokir, dan teks sambutan bot. Semua diatur di halaman Subscribers.
 
 Endpoint admin (butuh login): `GET /api/subscription/overview`, `POST /api/subscription/codes`, `POST /api/subscription/codes/:id/revoke`, `GET/PATCH /api/subscription/settings`, `PATCH/DELETE /api/subscription/subscribers/:id`, `POST/DELETE /api/subscription/subscribers/:id/selections`.
+
+## Bot Telegram pembeli
+
+Bot ini menerima kode dan perintah dari pembeli. Pakai **bot baru** (BotFather, `/newbot`) dengan token terpisah dari `TELEGRAM_BOT_TOKEN` (bot notifikasi pribadi Anda). Satu token tidak boleh dibaca oleh dua program sekaligus, jadi jangan pakai token yang masih dipakai skrip lain yang membaca pesan.
+
+1. Isi `.env`: `SUBSCRIBER_BOT_TOKEN=token_bot_baru`
+2. Restart server. Di log muncul "Bot pelanggan aktif: @namabot", dan halaman Subscribers menampilkan status bot serta tombol Salin tautan bot.
+3. Buat kode di halaman Subscribers. Tiap kode punya tombol **Salin tautan** (`https://t.me/namabot?start=KODE`): pembeli cukup mengetuk tautan itu lalu Start, dan kodenya langsung ditukar.
+
+Perintah pembeli:
+
+- `/start` sambutan dan cara membeli (teks dari pengaturan langganan).
+- Mengirim kode (boleh huruf kecil atau tanpa strip) menukar kode.
+- `/akun` masa aktif, jatah, dan status live akun yang dipantau.
+- `/tambah tiktok username` atau `/tambah bigo username` (username atau tautan profil boleh dipakai). Bot menampilkan tautan profil dan meminta konfirmasi sebelum akun ditambahkan.
+- `/hapus tiktok username` melepas akun (dengan konfirmasi dan batas penggantian per minggu).
+- `/notif_selesai on|off` kabar saat live berakhir.
+- `/hapusdata` menghapus semua data pembeli (dengan konfirmasi).
+
+Keamanan dan aturan:
+
+- Bot hanya merespons chat pribadi. Pesan grup diabaikan.
+- Kode salah dibatasi 5 kali per jam per chat. Setelah itu chat itu dikunci sementara, bahkan untuk kode yang benar.
+- Bot memakai long polling, jadi tidak butuh alamat publik. Posisi pesan terakhir disimpan, sehingga pesan tidak diproses dua kali setelah server di-restart.
+- Jika token bot dipakai program lain yang juga membaca pesan, status bot menampilkan peringatan dan bot mencoba lagi tiap 30 detik.
+- Pengiriman notifikasi live ke pembeli belum aktif di tahap ini (tahap 3).
