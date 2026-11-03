@@ -86,7 +86,7 @@ export default function Overview() {
     { label: 'Currently live', value: stats.live, note: 'status terpercaya', tone: 'live' },
     { label: 'Offline', value: stats.offline, note: 'terkonfirmasi' },
     { label: 'Unknown / error', value: stats.unknown, note: `${stats.disabled} monitoring off`, tone: stats.unknown ? 'warn' : '' },
-    { label: 'Active services', value: `${stats.activeServices}/5`, note: `${stats.disabledServices} disabled` }
+    { label: 'Active services', value: `${stats.activeServices}/${PLATFORMS.length}`, note: `${stats.disabledServices} disabled` }
   ]
 
   return (
@@ -219,7 +219,7 @@ export default function Overview() {
             </div>
             <dl className="health">
               <div><dt>Global monitoring</dt><dd className={`tone-${global}`}>{{ running: 'Running', partial: 'Partially running', stopped: 'Stopped', starting: 'Starting' }[global]}</dd></div>
-              <div><dt>Platform services aktif</dt><dd>{stats.activeServices} dari 5</dd></div>
+              <div><dt>Platform services aktif</dt><dd>{stats.activeServices} dari {PLATFORMS.length}</dd></div>
               <div><dt>Akun memenuhi syarat monitoring</dt><dd>{stats.eligible} dari {stats.total}</dd></div>
               <div><dt>Akun live sekarang</dt><dd>{stats.live}</dd></div>
               <div><dt>Error terbaru</dt><dd>{activities.filter((a) => a.level === 'error').length}</dd></div>

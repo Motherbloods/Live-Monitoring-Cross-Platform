@@ -39,7 +39,7 @@ export default function Topbar({ onMenu }) {
           <span className="dot" />
           <div>
             <strong>{LABEL[status]}</strong>
-            <small>{enabled} dari 5 service aktif</small>
+            <small>{enabled} dari {PLATFORM_IDS.length} service aktif</small>
           </div>
           <Link to="/platforms" className="pill-link">
             Platform

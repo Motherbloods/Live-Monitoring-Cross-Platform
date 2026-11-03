@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Activity, Bell, Clapperboard, History, LayoutDashboard, PanelLeftClose, PanelLeftOpen, Radio, Server, Settings, Users } from 'lucide-react'
+import { PLATFORM_IDS } from '../../config/defaults.js'
 import { useAppStore } from '../../store/appStore.js'
 import { computeStats, getGlobalStatus } from '../../utils/effectiveConfig.js'
 
@@ -19,7 +20,7 @@ export default function Sidebar({ collapsed, onToggle, open, onNavigate }) {
   const { accounts, runtime, platformRuntime, config } = useAppStore()
   const stats = computeStats(accounts, runtime, platformRuntime, config)
   const global = getGlobalStatus(config, platformRuntime)
-  const platformErrors = stats.degradedServices + (stats.activeServices < 5 - stats.disabledServices ? 1 : 0)
+  const platformErrors = stats.degradedServices + (stats.activeServices < PLATFORM_IDS.length - stats.disabledServices ? 1 : 0)
 
   return (
     <aside className={`sidebar ${collapsed ? 'is-collapsed' : ''} ${open ? 'is-open' : ''}`}>
