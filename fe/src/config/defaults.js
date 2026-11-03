@@ -3,7 +3,8 @@ export const PLATFORMS = [
   { id: 'shopee', name: 'Shopee Live', short: 'Shopee', color: '#ff6a2b', hostHint: 'shopee.co.id' },
   { id: 'youtube', name: 'YouTube Live', short: 'YouTube', color: '#ff3d3d', hostHint: 'youtube.com' },
   { id: 'instagram', name: 'Instagram Live', short: 'Instagram', color: '#d946a8', hostHint: 'instagram.com' },
-  { id: 'twitch', name: 'Twitch', short: 'Twitch', color: '#9b6bff', hostHint: 'twitch.tv' }
+  { id: 'twitch', name: 'Twitch', short: 'Twitch', color: '#9b6bff', hostHint: 'twitch.tv' },
+  { id: 'bigo', name: 'Bigo Live', short: 'Bigo', color: '#a3e635', hostHint: 'bigo.tv' }
 ]
 
 export const PLATFORM_IDS = PLATFORMS.map((p) => p.id)
@@ -67,7 +68,8 @@ export const DEFAULT_CONFIG = {
     shopee: platformDefaults(null),
     youtube: platformDefaults(null),
     instagram: platformDefaults(120),
-    twitch: platformDefaults(null)
+    twitch: platformDefaults(null),
+    bigo: platformDefaults(180)
   }
 }
 
