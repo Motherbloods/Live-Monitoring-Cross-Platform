@@ -104,3 +104,30 @@ Aturan:
 - Service gagal dan service pulih dikirim hanya saat status berubah, dan paling sering sekali per 10 menit per platform, supaya tidak membanjiri chat jika koneksi naik-turun.
 - Jika pengiriman gagal, kegagalannya tercatat di log service (token disamarkan) dan tidak mengganggu pemeriksaan.
 - Notifikasi rekaman tidak dipakai dan disembunyikan dari halaman Notifications.
+
+## Checker Twitch
+
+Checker Twitch memakai API resmi Twitch (Helix, endpoint `Get Streams`) dengan app access token (client credentials). Tidak butuh browser.
+
+1. Daftarkan aplikasi di https://dev.twitch.tv/console (gratis), lalu ambil Client ID dan buat Client Secret.
+2. Isi di `.env` server:
+
+```
+TWITCH_CLIENT_ID=...
+TWITCH_CLIENT_SECRET=...
+```
+
+3. Coba satu akun:
+
+```
+npm run try-twitch -- username_twitch
+```
+
+Aturan:
+
+- Token diambil otomatis, dipakai ulang sampai hampir kedaluwarsa, dan diambil ulang sekali jika ditolak.
+- Akun yang tidak ada dianggap pemeriksaan gagal (bukan offline). Keberadaan akun diverifikasi sekali, saat pertama kali ia tampak offline.
+- Rate limit, kredensial salah, dan timeout menjadi pesan error di log service. Status akun tidak berubah.
+- Username Twitch harus 4-25 karakter: huruf, angka, atau garis bawah.
+- Client Secret tidak pernah dikirim ke browser dan disamarkan di pesan error.
+- `TWITCH_CHECKER=dummy` mengembalikan Twitch ke data contoh.
