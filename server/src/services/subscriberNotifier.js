@@ -124,13 +124,17 @@ export const notifySubscriber = (subscriber, text) => {
 
 export const flushSubscriberQueue = () => (queue.length === 0 && inFlight === 0 ? Promise.resolve() : new Promise((resolve) => idle.push(resolve)))
 
-export const notifyFollowersLiveStart = (account, live) => {
-  if (!botReady()) return 0
+export const liveStartText = (account, live) => {
   const timezone = getState().config.global.timezone
   const lines = [`${account.displayName} sedang live di ${NAMES[account.platformId]}`, '', `Akun: @${account.username}`, `Mulai: ${clock(live.startedAt, timezone)}`]
   if (live.title && live.title !== 'Live Bigo') lines.push(`Judul: ${live.title}`)
   lines.push(`Tonton: ${live.url || liveUrl(account)}`)
-  const text = lines.join('\n')
+  return lines.join('\n')
+}
+
+export const notifyFollowersLiveStart = (account, live) => {
+  if (!botReady()) return 0
+  const text = liveStartText(account, live)
   return followersOf(account.id).filter((s) => notifySubscriber(s, text)).length
 }
 
