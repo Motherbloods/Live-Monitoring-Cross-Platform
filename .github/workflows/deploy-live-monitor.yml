@@ -1,0 +1,98 @@
+name: Deploy Live Monitor Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: Jalankan uji server dan frontend sebelum membangun
+        type: boolean
+        default: true
+      scan_images:
+        description: Pindai image dengan Trivy (hanya laporan, tidak menggagalkan deploy)
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-live-monitor-production
+  cancel-in-progress: false
+
+env:
+  ENV_FILE: /opt/live-monitor/.env
+  COMPOSE_PROJECT_NAME: live-monitor
+
+jobs:
+  deploy:
+    name: Deploy Live Monitor Production
+    runs-on: self-hosted
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Periksa konfigurasi di VM
+        run: bash deploy/check-env.sh "$ENV_FILE"
+
+      - name: Validasi docker compose
+        run: docker compose --env-file "$ENV_FILE" config -q
+
+      - name: Uji server
+        if: ${{ inputs.run_tests }}
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/repo:ro" -w /tmp node:22-bookworm-slim \
+            sh -c "cp -r /repo/server /tmp/server && cd /tmp/server && npm ci && npm test"
+
+      - name: Uji dan bangun frontend
+        if: ${{ inputs.run_tests }}
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/repo:ro" -w /tmp node:22-bookworm-slim \
+            sh -c "cp -r /repo/fe /tmp/fe && cd /tmp/fe && npm ci && npm run check && npm run build"
+
+      - name: Simpan image sebelumnya untuk rollback
+        run: |
+          for image in live-monitor-api live-monitor; do
+            if docker image inspect "$image:latest" >/dev/null 2>&1; then
+              docker tag "$image:latest" "$image:previous"
+            fi
+          done
+
+      - name: Bangun image
+        run: docker compose --env-file "$ENV_FILE" build --pull
+
+      - name: Pindai image dengan Trivy
+        if: ${{ inputs.scan_images }}
+        run: |
+          for image in live-monitor-api:latest live-monitor:latest; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache aquasec/trivy:latest \
+              image --severity HIGH,CRITICAL --exit-code 0 "$image"
+          done
+
+      - name: Jalankan container
+        run: docker compose --env-file "$ENV_FILE" up -d --remove-orphans
+
+      - name: Tunggu sampai sehat
+        run: bash deploy/wait-healthy.sh 180 live-monitor-mongo live-monitor-api live-monitor
+
+      - name: Uji asap lewat Nginx
+        run: |
+          port="$(grep -E '^WEB_PORT=' "$ENV_FILE" | head -n1 | cut -d= -f2-)"
+          curl -fsS "http://127.0.0.1:${port:-5177}/api/health"
+          curl -fsS "http://127.0.0.1:${port:-5177}/healthz"
+
+      - name: Bersihkan image lama yang tidak terpakai
+        run: docker image prune -f
+
+      - name: Tampilkan log dan kembalikan versi sebelumnya bila gagal
+        if: ${{ failure() }}
+        run: |
+          docker compose --env-file "$ENV_FILE" logs --tail=80 api web || true
+          rolled=0
+          for image in live-monitor-api live-monitor; do
+            if docker image inspect "$image:previous" >/dev/null 2>&1; then
+              docker tag "$image:previous" "$image:latest"
+              rolled=1
+            fi
+          done
+          if [ "$rolled" = "1" ]; then
+            docker compose --env-file "$ENV_FILE" up -d --no-build || true
+            echo "::warning::Deploy gagal. Versi sebelumnya dipulihkan."
+          fi
