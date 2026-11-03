@@ -75,6 +75,8 @@ export const validateAccountInput = (input, accounts, editingId = null) => {
     }
   }
   if (!/^[A-Za-z0-9._-]{2,40}$/.test(username)) errors.push('username harus 2-40 karakter: huruf, angka, titik, garis bawah, atau strip.')
+  else if (platformId === 'twitch' && !/^[A-Za-z0-9_]{4,25}$/.test(username)) errors.push('username Twitch harus 4-25 karakter: huruf, angka, atau garis bawah.')
+  else if (platformId === 'tiktok' && !/^[A-Za-z0-9._]{2,24}$/.test(username)) errors.push('username TikTok harus 2-24 karakter: huruf, angka, titik, atau garis bawah.')
   if (profileUrl && PLATFORM_IDS.includes(platformId)) {
     try {
       if (!new URL(profileUrl).hostname.includes(HOST_HINTS[platformId])) errors.push(`profileUrl harus berasal dari ${HOST_HINTS[platformId]}.`)

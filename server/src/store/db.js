@@ -6,7 +6,16 @@ const file = () => path.resolve(process.env.DB_FILE || 'data/db.json')
 const clone = (v) => JSON.parse(JSON.stringify(v))
 
 const seedAccounts = [
-
+  ['tiktok', 'nadia.putri', 'Nadia Putri'],
+  ['tiktok', 'rizky_gadget', 'Rizky Gadget', 15],
+  ['tiktok', 'laras.skincare', 'Laras Skincare'],
+  ['shopee', 'toko_batik_solo', 'Toko Batik Solo'],
+  ['shopee', 'sepatu.lokal', 'Sepatu Lokal'],
+  ['youtube', 'WarungTekno', 'Warung Tekno'],
+  ['instagram', 'ayu.travel', 'Ayu Travel'],
+  ['instagram', 'tari.studio', 'Tari Studio'],
+  ['twitch', 'pixel_raka', 'Pixel Raka'],
+  ['twitch', 'gita_codes', 'Gita Codes']
 ]
 
 const hosts = { tiktok: 'tiktok.com/@', shopee: 'shopee.co.id/', youtube: 'youtube.com/@', instagram: 'instagram.com/', twitch: 'twitch.tv/' }
