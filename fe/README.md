@@ -67,3 +67,5 @@ Yang masih mock walau server aktif: tombol Test notification, aksi Cancel/Retry 
 ## Login
 
 Di mode server, aplikasi meminta login admin. Atur kata sandi di `server/.env` (lihat README server). Tombol keluar ada di topbar. Jika sesi berakhir, aplikasi kembali ke halaman login.
+
+`VITE_API_URL=same-origin` memakai alamat yang sama dengan halaman (cocok untuk deploy dengan Nginx yang meneruskan `/api` ke server). Lihat DEPLOY.md di root repo.

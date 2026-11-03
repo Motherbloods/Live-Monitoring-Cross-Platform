@@ -8,7 +8,7 @@ export default function ConnectionBanner() {
   return (
     <div className="conn-banner" role="alert">
       <WifiOff size={15} aria-hidden />
-      <span>Server di {API_URL} tidak terjangkau. Data yang tampil bisa kedaluwarsa.</span>
+      <span>Server {API_URL ? `di ${API_URL} ` : ''}tidak terjangkau. Data yang tampil bisa kedaluwarsa.</span>
       <button className="btn btn-small" onClick={hydrate}>Coba lagi</button>
     </div>
   )

@@ -53,7 +53,7 @@ export default function Login() {
           <h1>Masuk</h1>
           <p className="login-sub">Dashboard ini hanya untuk admin.</p>
 
-          {connection === 'offline' && <p className="login-error" role="alert">Server di {API_URL} tidak terjangkau.</p>}
+          {connection === 'offline' && <p className="login-error" role="alert">Server {API_URL ? `di ${API_URL} ` : ''}tidak terjangkau.</p>}
 
           <label className="field">
             <span>Username</span>

@@ -1,6 +1,8 @@
-export const API_URL = String(globalThis.__API_URL__ ?? import.meta.env?.VITE_API_URL ?? '').replace(/\/$/, '')
+const configured = String(globalThis.__API_URL__ ?? import.meta.env?.VITE_API_URL ?? '').trim()
 
-export const API_MODE = API_URL ? 'http' : 'mock'
+export const API_MODE = configured ? 'http' : 'mock'
+
+export const API_URL = configured === 'same-origin' ? '' : configured.replace(/\/$/, '')
 
 export const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
