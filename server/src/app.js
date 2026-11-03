@@ -14,7 +14,8 @@ export const createApp = () => {
   const app = express()
   const origins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map((s) => s.trim())
   app.disable('x-powered-by')
-  if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : process.env.TRUST_PROXY)
+  const proxy = process.env.TRUST_PROXY
+  if (proxy) app.set('trust proxy', proxy === 'true' ? 1 : /^\d+$/.test(proxy) ? Number(proxy) : proxy)
   app.use(cors({ origin: origins, credentials: true, allowedHeaders: ['Content-Type', 'X-Requested-With'] }))
   app.use(express.json({ limit: '100kb' }))
   app.use((req, res, next) => {

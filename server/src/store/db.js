@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { DEFAULT_CONFIG, DEFAULT_SUBSCRIPTION_SETTINGS } from '../config/defaults.js'
+import { createMongoStorage } from './mongoStorage.js'
 
 const file = () => path.resolve(process.env.DB_FILE || 'data/db.json')
 const clone = (v) => JSON.parse(JSON.stringify(v))
@@ -57,13 +58,7 @@ const seed = () => {
 
 let state = null
 let timer = null
-
-export const persistNow = () => {
-  fs.mkdirSync(path.dirname(file()), { recursive: true })
-  const tmp = `${file()}.tmp`
-  fs.writeFileSync(tmp, JSON.stringify(state, null, 2))
-  fs.renameSync(tmp, file())
-}
+let storage = null
 
 const migrate = (loaded) => {
   const defaults = clone(DEFAULT_CONFIG)
@@ -75,23 +70,90 @@ const migrate = (loaded) => {
     loaded.config.platforms[id] = { ...defaults.platforms[id], ...loaded.config.platforms[id] }
     loaded.platformRuntime[id] = loaded.platformRuntime[id] || { status: 'online', lastSuccess: null, lastError: null, retryCount: 0 }
   }
-  loaded.codes = loaded.codes || []
-  loaded.subscribers = loaded.subscribers || []
+  for (const key of ['accounts', 'history', 'recordings', 'logs', 'codes', 'subscribers']) loaded[key] = loaded[key] || []
+  loaded.runtime = loaded.runtime || {}
+  loaded.configSavedAt = loaded.configSavedAt ?? null
   loaded.botOffset = Number(loaded.botOffset) || 0
   loaded.subscriptionSettings = { ...clone(DEFAULT_SUBSCRIPTION_SETTINGS), ...loaded.subscriptionSettings }
   return loaded
 }
 
+const writeFile = () => {
+  fs.mkdirSync(path.dirname(file()), { recursive: true })
+  const tmp = `${file()}.tmp`
+  fs.writeFileSync(tmp, JSON.stringify(state, null, 2))
+  fs.renameSync(tmp, file())
+}
+
+export const persistNow = () => {
+  if (storage) return storage.enqueue(() => state)
+  writeFile()
+  return Promise.resolve()
+}
+
+const prepare = (loaded) => {
+  const ready = migrate(loaded)
+  for (const r of Object.values(ready.runtime)) r.checking = false
+  return ready
+}
+
 export const loadState = () => {
+  storage = null
   try {
-    state = migrate(JSON.parse(fs.readFileSync(file(), 'utf8')))
-    for (const r of Object.values(state.runtime)) r.checking = false
+    state = prepare(JSON.parse(fs.readFileSync(file(), 'utf8')))
   } catch {
     state = seed()
-    persistNow()
+    writeFile()
   }
   return state
 }
+
+export const initStore = async () => {
+  const uri = process.env.MONGODB_URI
+  if (!uri) return loadState()
+  const mongo = await createMongoStorage({ uri, dbName: process.env.MONGODB_DB || 'live_monitor', timeoutMs: Number(process.env.MONGODB_TIMEOUT_MS) || 8000 })
+  let migratedFrom = null
+  const loaded = await mongo.load()
+  if (loaded) {
+    state = prepare(loaded)
+  } else if (fs.existsSync(file())) {
+    try {
+      state = prepare(JSON.parse(fs.readFileSync(file(), 'utf8')))
+      migratedFrom = file()
+    } catch {
+      state = seed()
+    }
+  } else {
+    state = seed()
+  }
+  storage = mongo
+  await persistNow()
+  if (migratedFrom) {
+    try {
+      fs.renameSync(migratedFrom, `${migratedFrom}.sudah-dipindah`)
+      console.log(`Data dari ${migratedFrom} dipindahkan ke MongoDB. File lama disimpan sebagai ${migratedFrom}.sudah-dipindah`)
+    } catch {
+      console.log(`Data dari ${migratedFrom} dipindahkan ke MongoDB. File lama tidak bisa diganti namanya (folder hanya-baca), hapus atau pindahkan sendiri.`)
+    }
+  }
+  return state
+}
+
+export const flushStore = async () => {
+  if (storage) {
+    storage.enqueue(() => state)
+    await storage.flush()
+  }
+}
+
+export const closeStore = async () => {
+  if (storage) {
+    await storage.close()
+    storage = null
+  }
+}
+
+export const storageInfo = () => (storage ? { kind: 'mongo', ...storage.info() } : { kind: 'file', lastError: null })
 
 export const getState = () => state
 
