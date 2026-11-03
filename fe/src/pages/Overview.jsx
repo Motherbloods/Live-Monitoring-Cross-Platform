@@ -44,7 +44,7 @@ function LiveCard({ account, live }) {
             <small>@{account.username} · {p.short}</small>
           </div>
         </div>
-        <p className="live-title">{live.title}</p>
+        <p className="live-title">{live.title}{live.game ? ` · ${live.game}` : ''}</p>
         <div className="live-foot">
           <span>{live.viewers == null ? 'Penonton tidak tersedia' : `${compact(live.viewers)} penonton`}{live.simulated && <em> simulasi</em>}</span>
           <a className="btn btn-small" href={account.platformId === 'tiktok' ? `${account.profileUrl.replace(/\/$/, '')}/live` : account.profileUrl} target="_blank" rel="noreferrer">
