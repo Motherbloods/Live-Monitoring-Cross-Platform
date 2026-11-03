@@ -3,6 +3,7 @@ import { emptyRuntime, getState, persist, addLog } from '../store/db.js'
 import { defaultProfileUrl, validateAccountInput } from '../config/validation.js'
 import { getEligibility, resolveEffective } from '../utils/effectiveConfig.js'
 import { checkAccount, nextCheckAt } from '../services/monitor.js'
+import { dropAccountSelections } from '../services/subscription.js'
 import { HttpError, badRequest, wrap } from '../utils/http.js'
 
 const router = Router()
@@ -76,6 +77,7 @@ router.delete('/:id', (req, res) => {
   const account = find(req.params.id)
   state.accounts = state.accounts.filter((a) => a.id !== account.id)
   delete state.runtime[account.id]
+  dropAccountSelections(account.id)
   addLog(account.platformId, 'INFO', `Akun ${account.displayName} dihapus`)
   persist()
   res.json({ ok: true })
