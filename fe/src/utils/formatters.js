@@ -34,3 +34,7 @@ export const minutes = (n) => {
 
 export const dateTime = (iso) =>
   new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: activeTimezone })
+
+export const dateOnly = (iso) => new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', timeZone: activeTimezone })
+
+export const daysLeft = (iso) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000)
