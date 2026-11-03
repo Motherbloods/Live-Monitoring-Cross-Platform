@@ -1,6 +1,7 @@
 import { addLog, getState, persist } from '../store/db.js'
 import { checkers } from './checkers.js'
 import { notifyLiveEnd, notifyLiveStart, notifyServiceFailed, notifyServiceRecovered } from './notifier.js'
+import { notifyFollowersLiveEnd, notifyFollowersLiveStart } from './subscriberNotifier.js'
 import { getEligibility, resolveEffective } from '../utils/effectiveConfig.js'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -10,8 +11,13 @@ const runningByPlatform = {}
 let ticking = false
 let timer = null
 
-const withTimeout = (promise, ms) =>
-  Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Permintaan melewati batas waktu')), ms))])
+const withTimeout = (promise, ms) => {
+  let timer
+  const limit = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Permintaan melewati batas waktu')), ms)
+  })
+  return Promise.race([promise, limit]).finally(() => clearTimeout(timer))
+}
 
 const syncHistory = (account, before, after) => {
   const { history } = getState()
@@ -81,8 +87,14 @@ export const checkAccount = async (account, { retry = true } = {}) => {
     if (before !== result.status && (before === 'live' || result.status === 'live')) {
       addLog(account.platformId, 'INFO', `${account.displayName} ${result.status === 'live' ? 'terdeteksi live' : 'selesai live'}`)
     }
-    if (before !== 'live' && result.status === 'live') notifyLiveStart(account, result.live)
-    if (before === 'live' && result.status !== 'live') notifyLiveEnd(account, previousLive?.startedAt)
+    if (before !== 'live' && result.status === 'live') {
+      notifyLiveStart(account, result.live)
+      notifyFollowersLiveStart(account, result.live)
+    }
+    if (before === 'live' && result.status !== 'live') {
+      notifyLiveEnd(account, previousLive?.startedAt)
+      notifyFollowersLiveEnd(account, previousLive?.startedAt)
+    }
   } else {
     runtime.lastChecked = now
     runtime.lastError = error.message
