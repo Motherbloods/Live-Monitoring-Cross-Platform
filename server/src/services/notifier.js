@@ -45,7 +45,7 @@ export const notifyLiveStart = (account, live) => {
     `Platform: ${name}`,
     `Started At: ${clock(live.startedAt, config.global.timezone)}`,
     ...(live.title ? [`Title: ${live.title}`] : []),
-    `Live URL: ${liveUrl(account)}`
+    `Live URL: ${live.url || liveUrl(account)}`
   ])
 }
 
