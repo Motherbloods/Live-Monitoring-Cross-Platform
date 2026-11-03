@@ -32,6 +32,13 @@ export const followersOf = (accountId) => getState().subscribers.filter((s) => i
 
 const platformLabel = (id) => ({ tiktok: 'TikTok', bigo: 'Bigo Live', youtube: 'YouTube', twitch: 'Twitch', shopee: 'Shopee', instagram: 'Instagram' })[id] || id
 
+export const reactivateSelections = (sub) => {
+  for (const x of sub.selections) {
+    const account = getState().accounts.find((a) => a.id === x.accountId)
+    if (account && account.origin === 'subscription' && !account.monitoringEnabled) account.monitoringEnabled = true
+  }
+}
+
 export const pauseIfUnfollowed = (accountId) => {
   const account = getState().accounts.find((a) => a.id === accountId)
   if (!account || account.origin !== 'subscription') return
@@ -88,7 +95,7 @@ export const redeemCode = (input, { chatId, name = '', username = '' }) => {
   const now = Date.now()
   let renewed = false
   if (!sub) {
-    sub = { id: newId('sub'), chatId: id, name: String(name).slice(0, 80), telegramUsername: String(username).slice(0, 80), status: 'active', maxAccounts: code.maxAccounts, expiresAt: new Date(now + code.durationDays * DAY).toISOString(), selections: [], notifyEnd: false, changeLog: [], createdAt: new Date(now).toISOString(), note: '' }
+    sub = { id: newId('sub'), chatId: id, name: String(name).slice(0, 80), telegramUsername: String(username).slice(0, 80), status: 'active', maxAccounts: code.maxAccounts, expiresAt: new Date(now + code.durationDays * DAY).toISOString(), selections: [], notifyEnd: false, changeLog: [], createdAt: new Date(now).toISOString(), lastRenewedAt: new Date(now).toISOString(), blocked: false, note: '' }
     state.subscribers.push(sub)
   } else {
     renewed = true
@@ -96,7 +103,11 @@ export const redeemCode = (input, { chatId, name = '', username = '' }) => {
     const base = active ? new Date(sub.expiresAt).getTime() : now
     sub.expiresAt = new Date(base + code.durationDays * DAY).toISOString()
     sub.maxAccounts = active ? Math.max(sub.maxAccounts, code.maxAccounts) : code.maxAccounts
+    const before = sub.selections.map((x) => x.accountId)
     sub.selections = sub.selections.slice(0, sub.maxAccounts)
+    before.filter((id) => !sub.selections.some((x) => x.accountId === id)).forEach(pauseIfUnfollowed)
+    sub.lastRenewedAt = new Date(now).toISOString()
+    reactivateSelections(sub)
     if (name) sub.name = String(name).slice(0, 80)
     if (username) sub.telegramUsername = String(username).slice(0, 80)
   }
@@ -180,6 +191,8 @@ export const updateSubscriber = (id, patch) => {
     const days = intIn(patch.extendDays, 1, 3650, 'Perpanjangan (hari)')
     const base = isActive(sub) || sub.status === 'revoked' ? Math.max(Date.now(), new Date(sub.expiresAt).getTime()) : Date.now()
     sub.expiresAt = new Date(base + days * DAY).toISOString()
+    sub.lastRenewedAt = new Date().toISOString()
+    if (isActive(sub)) reactivateSelections(sub)
   }
   if (patch.maxAccounts !== undefined) {
     const max = intIn(patch.maxAccounts, 1, 50, 'Jatah akun')

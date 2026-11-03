@@ -196,6 +196,11 @@ export const handleUpdate = async (update, api) => {
     if (update.callback_query) return await handleCallback(api, update.callback_query)
     const msg = update.message
     if (!msg || msg.chat?.type !== 'private' || typeof msg.text !== 'string') return null
+    const known = getSubscriberByChat(msg.chat.id)
+    if (known?.blocked) {
+      known.blocked = false
+      persist()
+    }
     const text = msg.text.trim()
     if (text.startsWith('/')) {
       const [first, ...args] = text.split(/\s+/)
