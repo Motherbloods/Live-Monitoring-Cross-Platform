@@ -28,6 +28,11 @@ export const validateAccount = (form, accounts, editingId = null) => {
       errors.profileUrl = 'Format URL tidak valid. Contoh: https://...'
     }
   }
+  const shown = form.username.trim().replace(/^@/, '') || username
+  if (!errors.username && shown) {
+    if (form.platformId === 'twitch' && !/^[A-Za-z0-9_]{4,25}$/.test(shown)) errors.username = 'Username Twitch 4–25 karakter: huruf, angka, atau garis bawah.'
+    if (form.platformId === 'tiktok' && !/^[A-Za-z0-9._]{2,24}$/.test(shown)) errors.username = 'Username TikTok 2–24 karakter: huruf, angka, titik, atau garis bawah.'
+  }
   if (form.useCustomCheckInterval) {
     const n = Number(form.customCheckIntervalSeconds)
     const { min, max } = LIMITS.interval
