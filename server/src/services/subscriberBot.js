@@ -3,6 +3,9 @@ import { defaultProfileUrl, usernameFromUrl } from '../config/validation.js'
 import { addLog, getState, persist, persistNow } from '../store/db.js'
 import { addSelection, deleteSubscriber, getSubscriberByChat, isActive, normalizeCode, prepareSelection, redeemCode, removeSelection, updateSubscriber } from './subscription.js'
 import { setBotStatus } from './botStatus.js'
+import { checkAccount } from './monitor.js'
+import { liveStartText, notifySubscriber } from './subscriberNotifier.js'
+import { resolveEffective } from '../utils/effectiveConfig.js'
 import { createBotApi } from './telegramApi.js'
 import { HttpError } from '../utils/http.js'
 
@@ -13,6 +16,30 @@ const LIVE_LABEL = { live: 'sedang live', offline: 'tidak live', unknown: 'belum
 const PENDING_TTL = 10 * 60 * 1000
 const CODE_FAIL_LIMIT = 5
 const CODE_FAIL_WINDOW = 60 * 60 * 1000
+
+let background = Promise.resolve()
+
+export const flushBackground = () => background
+
+export const announceIfLive = async (subscriberId, accountId) => {
+  const state = getState()
+  const sub = state.subscribers.find((s) => s.id === subscriberId)
+  const account = state.accounts.find((a) => a.id === accountId)
+  if (!sub || !account || !isActive(sub)) return
+  const runtime = state.runtime[accountId]
+  if (!runtime || runtime.checking) return
+  const interval = resolveEffective(account, state.config).checkIntervalSeconds
+  const fresh = runtime.lastSuccess && Date.now() - new Date(runtime.lastSuccess).getTime() <= Math.max(300000, 3 * interval * 1000)
+  const before = runtime.lastStatus
+  if (!fresh) {
+    if (!state.config.global.globalMonitoringEnabled || !state.config.platforms[account.platformId].serviceEnabled) return
+    const successBefore = runtime.lastSuccess
+    await checkAccount(account, { retry: false })
+    if (runtime.lastSuccess === successBefore) return
+    if (before !== 'live' && runtime.lastStatus === 'live') return
+  }
+  if (runtime.lastStatus === 'live' && runtime.live) notifySubscriber(sub, liveStartText(account, runtime.live))
+}
 
 const pending = new Map()
 const failures = new Map()
@@ -177,6 +204,7 @@ const handleCallback = async (api, query) => {
     if (!sub) throw new HttpError(403, 'NO_SUBSCRIPTION', 'Data Anda tidak ditemukan.')
     if (item.kind === 'add') {
       const { account, subscriber } = addSelection(sub.id, item.platformId, item.username)
+      background = background.then(() => announceIfLive(subscriber.id, account.id)).catch(() => {})
       return finish(`Berhasil. ${PLATFORM_NAMES[item.platformId]} @${account.username} sekarang dipantau (${subscriber.selections.length} dari ${subscriber.maxAccounts}). Anda akan dapat notifikasi saat akun ini mulai live.`)
     }
     if (item.kind === 'remove') {

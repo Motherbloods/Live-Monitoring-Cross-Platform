@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { getState, persist } from '../store/db.js'
 import { addSelection, createCodes, deleteSubscriber, overview, removeSelection, revokeCode, updateSubscriber, validateSettings } from '../services/subscription.js'
+import { announceIfLive } from '../services/subscriberBot.js'
 import { HttpError } from '../utils/http.js'
 
 const router = Router()
@@ -36,7 +37,8 @@ router.delete('/subscribers/:id', (req, res) => {
 router.post('/subscribers/:id/selections', (req, res) => {
   const { platformId, username } = req.body || {}
   if (typeof platformId !== 'string' || typeof username !== 'string') throw new HttpError(400, 'VALIDATION_ERROR', 'platformId dan username wajib diisi.')
-  addSelection(req.params.id, platformId, username, { byAdmin: true })
+  const { account, subscriber } = addSelection(req.params.id, platformId, username, { byAdmin: true })
+  announceIfLive(subscriber.id, account.id).catch(() => {})
   res.status(201).json(overview())
 })
 
