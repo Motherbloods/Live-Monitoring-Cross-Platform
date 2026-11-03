@@ -79,7 +79,7 @@ export default function SubscribersTable({ subscribers, settings, run }) {
             <div key={s.id}>
               <div className="drow">
                 <div className="acell" data-label="Pelanggan"><strong>{s.name || 'Tanpa nama'}</strong><small>{s.telegramUsername ? `@${s.telegramUsername}` : `chat ${s.chatId}`}{s.note ? ` · ${s.note}` : ''}</small></div>
-                <div className="acell" data-label="Status"><span className={`badge badge-${state[1]}`}>{state[0]}</span></div>
+                <div className="acell" data-label="Status"><span className={`badge badge-${state[1]}`}>{state[0]}</span>{s.blocked && <span className="badge badge-degraded" title="Pelanggan memblokir bot atau chat tidak ditemukan. Notifikasi dihentikan sampai ia menulis ke bot lagi.">Bot diblokir</span>}</div>
                 <div className="acell" data-label="Berlaku sampai">{dateOnly(s.expiresAt)}<small>{s.active ? `${left} hari lagi` : 'sudah lewat'}</small></div>
                 <div className="acell" data-label="Akun">{s.selections.length} / {s.maxAccounts}</div>
                 <div className="acell right"><button className="icon-btn" onClick={() => setOpen(open === s.id ? null : s.id)} aria-label={open === s.id ? 'Tutup rincian' : 'Buka rincian'}>{open === s.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</button></div>

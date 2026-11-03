@@ -54,6 +54,7 @@ export default function Subscribers() {
         {bot.running
           ? <><span>Bot pembeli aktif: <strong>@{bot.username}</strong></span><button className="btn btn-small" onClick={() => copyBotLink(bot.username)}>Salin tautan bot</button></>
           : <span>{bot.configured ? `Bot pembeli belum berjalan: ${bot.lastError || 'sedang memulai'}` : 'Bot pembeli belum aktif. Isi SUBSCRIBER_BOT_TOKEN di server/.env lalu restart server.'}</span>}
+        {bot.running && <small>Antrean {bot.queue.pending} · terkirim {bot.queue.sent} · gagal {bot.queue.failed} (sejak server dijalankan)</small>}
         {bot.running && bot.lastError && <small className="field-err">{bot.lastError}</small>}
       </div>
 

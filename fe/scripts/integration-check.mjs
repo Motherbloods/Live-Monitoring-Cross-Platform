@@ -203,6 +203,7 @@ await test('langganan: kode dibuat sekali tampil, ringkasan tanpa kode asli, bat
   await assert.rejects(() => serverApi.createCodes({ count: 0 }), /Jumlah kode/)
   assert.equal(ov.bot.configured, false)
   assert.equal(ov.bot.running, false)
+  assert.equal(typeof ov.bot.queue.sent, 'number')
 })
 
 await test('server mati membuat koneksi offline tanpa menghapus data terakhir', async () => {
