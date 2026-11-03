@@ -247,3 +247,11 @@ Cara kerja:
 - **Masa aktif habis**: pelanggan dikabari sekali, notifikasi berhenti, dan akun pilihannya tetap tersimpan. Akun milik pelanggan yang sudah tidak diikuti siapa pun dijeda otomatis. Saat pelanggan memperpanjang dengan kode baru, pemeriksaannya aktif kembali.
 - Pemeriksaan masa aktif berjalan tiap 10 menit dan saat server dimulai.
 - Statistik antrean (menunggu, terkirim, gagal sejak server dijalankan) tampil di halaman Subscribers.
+
+### Akun yang sudah live saat ditambahkan
+
+Notifikasi live dikirim saat status berubah menjadi live, jadi pembeli yang menambah akun yang **sudah sedang live** tidak akan mendapat kabar sampai siaran berikutnya. Untuk menutup celah itu, setelah pembeli menekan "Ya, lanjutkan" pada `/tambah` (atau admin menambahkan akun dari dashboard), server memeriksa keadaan akun itu:
+
+- Data live yang masih segar (pemeriksaan sukses terakhir dalam 5 menit atau 3 kali interval, mana yang lebih lama): pembeli langsung dikabari dengan jam mulai asli siaran, tanpa memeriksa ulang.
+- Akun baru atau datanya sudah usang: server memeriksanya saat itu juga. Kalau ternyata live, pembeli dikabari satu kali. Kalau pemeriksaan gagal, tidak ada pesan, dan status lama tidak dipercaya.
+- Pembeli lain yang sudah mengikuti akun itu tidak dikirimi pesan ganda.
