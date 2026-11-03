@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Ticket } from 'lucide-react'
 import { API_MODE } from '../api/client.js'
+import { useAppStore } from '../store/appStore.js'
 import useSubscription from '../hooks/useSubscription.js'
 import CodeCreateForm from '../components/subscribers/CodeCreateForm.jsx'
 import CodesTable from '../components/subscribers/CodesTable.jsx'
@@ -11,6 +12,15 @@ import ErrorState from '../components/common/ErrorState.jsx'
 
 export default function Subscribers() {
   const { data, loading, error, reload, run } = useSubscription()
+  const pushToast = useAppStore((s) => s.pushToast)
+  const copyBotLink = async (name) => {
+    try {
+      await navigator.clipboard.writeText(`https://t.me/${name}`)
+      pushToast('Tautan bot disalin.', 'ok')
+    } catch {
+      pushToast(`Tautan bot: https://t.me/${name}`, 'info')
+    }
+  }
   const [newCodes, setNewCodes] = useState(null)
 
   if (API_MODE !== 'http') {
@@ -23,7 +33,7 @@ export default function Subscribers() {
   if (loading) return <div className="page"><p className="note">Memuat…</p></div>
   if (error && !data) return <ErrorState title="Data langganan tidak bisa dimuat" message={error} onRetry={reload} />
 
-  const { settings, codes, subscribers, stats } = data
+  const { settings, codes, subscribers, stats, bot } = data
   const items = [
     ['Kode belum dipakai', stats.unusedCodes],
     ['Pelanggan aktif', stats.activeSubscribers],
@@ -36,9 +46,16 @@ export default function Subscribers() {
       <header className="page-head">
         <div>
           <h1>Subscribers</h1>
-          <p>Kode langganan dan pelanggan Telegram. Bot pelanggan menyusul di tahap berikutnya.</p>
+          <p>Kode langganan dan pelanggan Telegram.</p>
         </div>
       </header>
+
+      <div className={`bot-line ${bot.running ? 'is-ok' : 'is-warn'}`}>
+        {bot.running
+          ? <><span>Bot pembeli aktif: <strong>@{bot.username}</strong></span><button className="btn btn-small" onClick={() => copyBotLink(bot.username)}>Salin tautan bot</button></>
+          : <span>{bot.configured ? `Bot pembeli belum berjalan: ${bot.lastError || 'sedang memulai'}` : 'Bot pembeli belum aktif. Isi SUBSCRIBER_BOT_TOKEN di server/.env lalu restart server.'}</span>}
+        {bot.running && bot.lastError && <small className="field-err">{bot.lastError}</small>}
+      </div>
 
       <section className="stats stats-4" aria-label="Ringkasan langganan">
         {items.map(([label, value]) => (
@@ -68,7 +85,7 @@ export default function Subscribers() {
         </details>
       </section>
 
-      {newCodes && <NewCodesModal codes={newCodes} onClose={() => setNewCodes(null)} />}
+      {newCodes && <NewCodesModal codes={newCodes} botUsername={bot.running ? bot.username : null} onClose={() => setNewCodes(null)} />}
     </div>
   )
 }
