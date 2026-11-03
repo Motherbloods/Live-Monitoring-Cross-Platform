@@ -9,7 +9,8 @@
     "hash-password": "node scripts/hash-password.js",
     "test": "node --test test/*.test.mjs",
     "try-tiktok": "node scripts/try-tiktok.js",
-    "try-twitch": "node scripts/try-twitch.js"
+    "try-twitch": "node scripts/try-twitch.js",
+    "try-youtube": "node scripts/try-youtube.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
