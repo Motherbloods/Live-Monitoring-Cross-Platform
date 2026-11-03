@@ -82,3 +82,25 @@ Aturan:
 - Platform lain masih memakai checker dummy.
 - Browser dibuka bersama dan dipakai ulang, lalu dimulai ulang setelah 300 halaman untuk menjaga memori.
 - Jangan terlalu rapat: setiap pemeriksaan membuka satu halaman penuh. Untuk puluhan akun TikTok, interval 120 sampai 180 detik jauh lebih aman daripada 30 detik.
+
+## Notifikasi Telegram
+
+Server mengirim pesan Telegram untuk: live dimulai, live berakhir, service gagal, dan service pulih. Token bot hanya ada di `.env` server dan tidak pernah dikirim ke browser.
+
+1. Isi di `.env` (boleh memakai bot dan chat ID yang sama dengan skrip live recorder lama):
+
+```
+TELEGRAM_BOT_TOKEN=token_dari_BotFather
+TELEGRAM_CHAT_ID=id_chat_tujuan
+```
+
+2. Jika belum tahu chat ID: kirim satu pesan ke bot Anda, lalu buka `https://api.telegram.org/bot<TOKEN>/getUpdates` dan cari nilai `chat` → `id`.
+3. Restart server, buka halaman Notifications, lalu tekan Test notification.
+
+Aturan:
+
+- Yang dikirim mengikuti pengaturan di halaman Notifications: preferensi global, override platform, lalu pengaturan per akun (akun yang diatur Aktif atau Mati mengalahkan keduanya).
+- Pesan dikirim berurutan, minimal 1,1 detik antar pesan. Jika Telegram menjawab "terlalu cepat", server menunggu lalu mencoba sekali lagi.
+- Service gagal dan service pulih dikirim hanya saat status berubah, dan paling sering sekali per 10 menit per platform, supaya tidak membanjiri chat jika koneksi naik-turun.
+- Jika pengiriman gagal, kegagalannya tercatat di log service (token disamarkan) dan tidak mengganggu pemeriksaan.
+- Notifikasi rekaman tidak dipakai dan disembunyikan dari halaman Notifications.
