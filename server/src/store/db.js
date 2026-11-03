@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { DEFAULT_CONFIG } from '../config/defaults.js'
+import { DEFAULT_CONFIG, DEFAULT_SUBSCRIPTION_SETTINGS } from '../config/defaults.js'
 
 const file = () => path.resolve(process.env.DB_FILE || 'data/db.json')
 const clone = (v) => JSON.parse(JSON.stringify(v))
@@ -47,7 +47,10 @@ const seed = () => {
     platformRuntime: Object.fromEntries(Object.keys(DEFAULT_CONFIG.platforms).map((id) => [id, { status: 'online', lastSuccess: null, lastError: null, retryCount: 0 }])),
     history: [],
     recordings: [],
-    logs: []
+    logs: [],
+    codes: [],
+    subscribers: [],
+    subscriptionSettings: clone(DEFAULT_SUBSCRIPTION_SETTINGS)
   }
 }
 
@@ -71,6 +74,9 @@ const migrate = (loaded) => {
     loaded.config.platforms[id] = { ...defaults.platforms[id], ...loaded.config.platforms[id] }
     loaded.platformRuntime[id] = loaded.platformRuntime[id] || { status: 'online', lastSuccess: null, lastError: null, retryCount: 0 }
   }
+  loaded.codes = loaded.codes || []
+  loaded.subscribers = loaded.subscribers || []
+  loaded.subscriptionSettings = { ...clone(DEFAULT_SUBSCRIPTION_SETTINGS), ...loaded.subscriptionSettings }
   return loaded
 }
 

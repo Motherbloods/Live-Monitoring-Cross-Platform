@@ -54,6 +54,16 @@ export const DEFAULT_CONFIG = {
     youtube: platformDefaults(null),
     instagram: platformDefaults(120),
     twitch: platformDefaults(null),
-    bigo: { ...platformDefaults(180), requestTimeoutMs: 45000 }
+    bigo: platformDefaults(180)
   }
+}
+
+export const DEFAULT_SUBSCRIPTION_SETTINGS = {
+  allowedPlatforms: ['tiktok', 'bigo'],
+  defaultMaxAccounts: 3,
+  defaultDurationDays: 30,
+  platformCaps: { tiktok: 50, bigo: 30 },
+  changesPerWeek: 3,
+  blocklist: [],
+  contactText: 'Untuk berlangganan, hubungi admin. Setelah membayar, kirim kode yang Anda terima ke chat ini.'
 }
