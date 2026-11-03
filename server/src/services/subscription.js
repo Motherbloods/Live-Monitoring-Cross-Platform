@@ -1,7 +1,7 @@
 import { createHash, randomInt } from 'node:crypto'
 import { PLATFORM_IDS } from '../config/defaults.js'
 import { defaultProfileUrl, validateAccountInput } from '../config/validation.js'
-import { addLog, emptyRuntime, getState, persist } from '../store/db.js'
+import { addLog, emptyRuntime, getState, persist, persistNow } from '../store/db.js'
 import { botStatus } from './botStatus.js'
 import { HttpError } from '../utils/http.js'
 
@@ -69,7 +69,7 @@ export const createCodes = ({ label = '', maxAccounts, durationDays, count = 1 }
     created.push({ ...publicCode(record), code })
   }
   addLog(null, 'INFO', `${total} kode langganan dibuat (${plan.maxAccounts} akun, ${plan.durationDays} hari)`)
-  persist()
+  persistNow()
   return created
 }
 
@@ -115,7 +115,7 @@ export const redeemCode = (input, { chatId, name = '', username = '' }) => {
   code.redeemedAt = new Date(now).toISOString()
   code.redeemedBy = sub.id
   addLog(null, 'INFO', `Kode ${code.prefix}… dipakai oleh pelanggan baru atau perpanjangan`)
-  persist()
+  persistNow()
   return { subscriber: sub, renewed }
 }
 

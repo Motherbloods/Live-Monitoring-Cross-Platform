@@ -1,14 +1,21 @@
 import 'dotenv/config'
 import { createApp } from './app.js'
 import { assertAuthConfig } from './services/auth.js'
-import { loadState, persistNow } from './store/db.js'
+import { closeStore, flushStore, initStore, persistNow } from './store/db.js'
 import { closeBrowser } from './services/browser.js'
 import { startSubscriptionJobs, stopSubscriptionJobs } from './services/subscriptionJobs.js'
 import { startSubscriberBot, stopSubscriberBot } from './services/subscriberBot.js'
 import { startScheduler } from './services/monitor.js'
 
 assertAuthConfig()
-loadState()
+
+try {
+  await initStore()
+} catch (error) {
+  console.error(error.message)
+  process.exit(1)
+}
+
 startScheduler()
 startSubscriberBot()
 startSubscriptionJobs()
@@ -21,7 +28,9 @@ const server = createApp().listen(port, () => {
 const shutdown = async () => {
   stopSubscriberBot()
   stopSubscriptionJobs()
-  persistNow()
+  await persistNow()
+  await flushStore()
+  await closeStore()
   await closeBrowser()
   server.close(() => process.exit(0))
   setTimeout(() => process.exit(0), 1500).unref()

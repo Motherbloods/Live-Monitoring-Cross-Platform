@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getState, persist, addLog } from '../store/db.js'
+import { getState, persist, addLog, storageInfo } from '../store/db.js'
 import { isConfigured } from '../services/telegram.js'
 import { twitchConfigured } from '../services/twitch.js'
 import { botStatus } from '../services/botStatus.js'
@@ -13,7 +13,7 @@ const router = Router()
 
 router.get('/', (req, res) => {
   const { config, configSavedAt } = getState()
-  res.json({ config, savedAt: configSavedAt, engine: checkerModes(), integrations: { telegram: { configured: isConfigured() }, twitch: { configured: twitchConfigured() }, youtube: { configured: youtubeConfigured(), unitsToday: youtubeUsage().units }, bigo: { configured: bigoSessionAvailable() }, subscriberBot: botStatus() } })
+  res.json({ config, savedAt: configSavedAt, engine: checkerModes(), integrations: { telegram: { configured: isConfigured() }, twitch: { configured: twitchConfigured() }, youtube: { configured: youtubeConfigured(), unitsToday: youtubeUsage().units }, bigo: { configured: bigoSessionAvailable() }, subscriberBot: botStatus(), storage: storageInfo() } })
 })
 
 router.patch('/', (req, res) => {
