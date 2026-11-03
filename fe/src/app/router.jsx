@@ -7,6 +7,7 @@ import LiveAccounts from '../pages/LiveAccounts.jsx'
 import Platforms from '../pages/Platforms.jsx'
 import PlatformDetails from '../pages/PlatformDetails.jsx'
 import Settings from '../pages/Settings.jsx'
+import Subscribers from '../pages/Subscribers.jsx'
 import LiveHistory from '../pages/LiveHistory.jsx'
 import Recordings from '../pages/Recordings.jsx'
 import Notifications from '../pages/Notifications.jsx'
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
       { path: 'history', element: <LiveHistory /> },
       { path: 'recordings', element: <Recordings /> },
       { path: 'notifications', element: <Notifications /> },
+      { path: 'subscribers', element: <Subscribers /> },
       { path: 'settings', element: <Settings /> },
       { path: '*', element: <NotFound /> }
     ]

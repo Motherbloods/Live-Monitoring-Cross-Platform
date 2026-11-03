@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { Activity, Bell, Clapperboard, History, LayoutDashboard, PanelLeftClose, PanelLeftOpen, Radio, Server, Settings, Users } from 'lucide-react'
+import { Activity, Bell, Ticket, Clapperboard, History, LayoutDashboard, PanelLeftClose, PanelLeftOpen, Radio, Server, Settings, Users } from 'lucide-react'
+import { API_MODE } from '../../api/client.js'
 import { PLATFORM_IDS } from '../../config/defaults.js'
 import { useAppStore } from '../../store/appStore.js'
 import { computeStats, getGlobalStatus } from '../../utils/effectiveConfig.js'
@@ -11,6 +12,7 @@ const NAV = [
   { to: '/history', label: 'Live History', icon: History },
   { to: '/recordings', label: 'Recordings', icon: Clapperboard },
   { to: '/notifications', label: 'Notifications', icon: Bell },
+  { to: '/subscribers', label: 'Subscribers', icon: Ticket, httpOnly: true },
   { to: '/settings', label: 'Settings', icon: Settings }
 ]
 
@@ -32,7 +34,7 @@ export default function Sidebar({ collapsed, onToggle, open, onNavigate }) {
       </div>
 
       <nav aria-label="Navigasi utama">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {NAV.filter((n) => !n.httpOnly || API_MODE === 'http').map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className="nav-item" data-tip={label} onClick={onNavigate}>
             <Icon size={17} aria-hidden />
             <span className="nav-label">{label}</span>

@@ -6,7 +6,7 @@ import { getGlobalStatus } from '../../utils/effectiveConfig.js'
 import { API_MODE } from '../../api/client.js'
 import { PLATFORM_IDS } from '../../config/defaults.js'
 
-const TITLES = { '/': 'Overview', '/accounts': 'Live Accounts', '/platforms': 'Platforms', '/history': 'Live History', '/recordings': 'Recordings', '/notifications': 'Notifications', '/settings': 'Settings' }
+const TITLES = { '/': 'Overview', '/accounts': 'Live Accounts', '/platforms': 'Platforms', '/history': 'Live History', '/recordings': 'Recordings', '/notifications': 'Notifications', '/subscribers': 'Subscribers', '/settings': 'Settings' }
 const LABEL = { running: 'Running', partial: 'Partially running', stopped: 'Stopped', starting: 'Starting' }
 
 export default function Topbar({ onMenu }) {
