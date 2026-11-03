@@ -171,11 +171,10 @@ Aturan:
 
 ## Checker Bigo Live
 
-Bigo tidak punya API resmi. Checker ini membuka halaman `https://www.bigo.tv/<id>` di Chromium (browser yang sama dengan checker TikTok), lalu membaca balasan `getInternalStudioInfo` yang dikirim halaman itu sendiri, bersama sesi login Bigo yang sudah ada. Cara ini dipilih karena permintaan langsung tanpa browser tidak membawa token halaman, sehingga Bigo bisa menjawab tidak live atau tanpa URL stream untuk room yang sebenarnya live. Karena tidak resmi, bisa berhenti bekerja jika Bigo mengubah sistemnya.
+Bigo tidak punya API resmi. Checker ini memakai endpoint internal yang sama dengan skrip live recorder lama (`getInternalStudioInfo`) dan sesi login Bigo yang sudah ada. Karena tidak resmi, bisa berhenti bekerja jika Bigo mengubah sistemnya.
 
 Pemasangan:
 
-0. Pastikan Chromium terpasang (sama seperti TikTok): `npx playwright install chromium`.
 1. Salin `bigo-session.json` dari skrip lama ke `server/data/bigo-session.json` (atau atur lokasinya lewat `BIGO_SESSION_FILE` di `.env`). File ini berisi cookie login Anda: jangan di-commit dan jangan dibagikan. Folder `data` dan nama file ini sudah ada di `.gitignore`.
 2. Coba satu akun:
 
@@ -187,9 +186,7 @@ npm run try-bigo -- id_bigo
 
 Aturan:
 
-- Server hanya memasang cookie milik bigo.tv ke browser, dan membaca ulang file sesi otomatis saat file diganti, jadi memperbarui sesi tidak perlu me-restart server.
-- Tiap pemeriksaan membuka halaman Bigo di konteks browser baru, jadi lebih lambat dari permintaan langsung (biasanya beberapa detik). Batas waktu bawaan Bigo untuk database baru 45 detik. Pada database yang sudah ada, nilai ini tetap mengikuti pengaturan lama (bawaan global 15 detik): naikkan batas waktu platform Bigo di halaman konfigurasi jika pemeriksaan sering gagal karena melewati batas waktu.
-- `npm run try-bigo` juga menampilkan apakah Bigo mengirim URL stream (`adaUrlStream`), tanpa mencetak URL-nya.
+- Server hanya mengirim cookie milik bigo.tv ke Bigo, dan membaca ulang file sesi otomatis saat file diganti, jadi memperbarui sesi tidak perlu me-restart server.
 - Jika Bigo menjawab sesi tidak valid, pemeriksaan dianggap gagal dengan pesan "Sesi login Bigo kedaluwarsa", bukan offline. Tiga kegagalan berturut-turut memicu notifikasi Service Failed. Login ulang dengan `login_bigo_manual.js`, lalu salin `bigo-session.json` yang baru.
 - Bigo tidak mengirim judul atau jumlah penonton di endpoint ini (yang dikenal skrip lama hanya status live dan ID ruangan), jadi kartu live Bigo memakai judul umum dan tanpa penonton.
 - ID Bigo yang tidak ada belum bisa dibedakan dari akun yang offline.
@@ -197,3 +194,16 @@ Aturan:
 - Tautan profil bawaan `https://www.bigo.tv/user/<id>` belum diverifikasi. Jika salah, ubah URL profil akunnya lewat tombol Edit.
 - `BIGO_CHECKER=dummy` mengembalikan Bigo ke data contoh.
 - Database lama otomatis dilengkapi pengaturan Bigo saat server dijalankan.
+
+## Langganan (kode, pelanggan, pilihan akun)
+
+Tahap 1: penyimpanan dan API admin. Bot Telegram pelanggan dan pengiriman notifikasi per pelanggan menyusul di tahap berikutnya.
+
+Konsep:
+
+- **Kode**: dibuat admin di halaman Subscribers (jatah akun dan masa aktif per kode). Bentuknya `LM-XXXX-XXXX-XXXX`, acak, sekali pakai. Kode asli hanya tampil sekali saat dibuat; server hanya menyimpan hash-nya. Kode yang belum dipakai bisa dibatalkan.
+- **Pelanggan**: dibuat saat kode ditukar (lewat bot, tahap 2). Menukar kode lagi saat masih aktif memperpanjang masa aktif dan memakai jatah terbesar; setelah habis, langganan dimulai ulang dari sekarang.
+- **Pilihan akun**: pelanggan memilih username TikTok atau Bigo sebanyak jatahnya. Akun baru otomatis masuk daftar pemantauan (`origin: subscription`). Jika tidak ada pelanggan aktif yang mengikutinya, pemeriksaan akun itu dijeda otomatis. Akun buatan admin tidak pernah dijeda otomatis.
+- **Pengaturan**: platform yang boleh dipilih, kapasitas total per platform, batas penggantian akun per minggu, daftar blokir, dan teks sambutan bot. Semua diatur di halaman Subscribers.
+
+Endpoint admin (butuh login): `GET /api/subscription/overview`, `POST /api/subscription/codes`, `POST /api/subscription/codes/:id/revoke`, `GET/PATCH /api/subscription/settings`, `PATCH/DELETE /api/subscription/subscribers/:id`, `POST/DELETE /api/subscription/subscribers/:id/selections`.
