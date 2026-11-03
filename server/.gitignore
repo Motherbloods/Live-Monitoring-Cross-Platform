@@ -3,3 +3,4 @@ data
 .env
 *.log
 tiktok-dump.html
+bigo-session.json

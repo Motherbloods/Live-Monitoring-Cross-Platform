@@ -10,7 +10,8 @@
     "test": "node --test test/*.test.mjs",
     "try-tiktok": "node scripts/try-tiktok.js",
     "try-twitch": "node scripts/try-twitch.js",
-    "try-youtube": "node scripts/try-youtube.js"
+    "try-youtube": "node scripts/try-youtube.js",
+    "try-bigo": "node scripts/try-bigo.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
