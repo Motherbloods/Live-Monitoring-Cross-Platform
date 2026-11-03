@@ -6,6 +6,7 @@ import config from './routes/config.js'
 import monitoring from './routes/monitoring.js'
 import { history, logs, notifications, recordings } from './routes/data.js'
 import auth from './routes/auth.js'
+import subscription from './routes/subscription.js'
 import { requireAuth } from './services/auth.js'
 import { HttpError } from './utils/http.js'
 
@@ -31,6 +32,7 @@ export const createApp = () => {
   app.use('/api/auth', auth)
   app.use('/api', requireAuth)
   app.use('/api/accounts', accounts)
+  app.use('/api/subscription', subscription)
   app.use('/api/platforms', platforms)
   app.use('/api/config', config)
   app.use('/api/monitoring', monitoring)
