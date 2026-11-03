@@ -168,3 +168,29 @@ Aturan:
 - Jika channel memiliki beberapa siaran live bersamaan, yang penontonnya terbanyak yang dipakai.
 - `YOUTUBE_CHECKER=dummy` mengembalikan YouTube ke data contoh.
 - Perilaku live yang belum pernah diuji pada YouTube sungguhan: siaran live yang baru mulai harus muncul di daftar unggahan channel. Jika pada channel Anda tidak muncul, kabari agar metodenya diganti.
+
+## Checker Bigo Live
+
+Bigo tidak punya API resmi. Checker ini memakai endpoint internal yang sama dengan skrip live recorder lama (`getInternalStudioInfo`) dan sesi login Bigo yang sudah ada. Karena tidak resmi, bisa berhenti bekerja jika Bigo mengubah sistemnya.
+
+Pemasangan:
+
+1. Salin `bigo-session.json` dari skrip lama ke `server/data/bigo-session.json` (atau atur lokasinya lewat `BIGO_SESSION_FILE` di `.env`). File ini berisi cookie login Anda: jangan di-commit dan jangan dibagikan. Folder `data` dan nama file ini sudah ada di `.gitignore`.
+2. Coba satu akun:
+
+```
+npm run try-bigo -- id_bigo
+```
+
+3. Tambahkan akun Bigo lewat dashboard (platform Bigo Live, username berupa ID Bigo).
+
+Aturan:
+
+- Server hanya mengirim cookie milik bigo.tv ke Bigo, dan membaca ulang file sesi otomatis saat file diganti, jadi memperbarui sesi tidak perlu me-restart server.
+- Jika Bigo menjawab sesi tidak valid, pemeriksaan dianggap gagal dengan pesan "Sesi login Bigo kedaluwarsa", bukan offline. Tiga kegagalan berturut-turut memicu notifikasi Service Failed. Login ulang dengan `login_bigo_manual.js`, lalu salin `bigo-session.json` yang baru.
+- Bigo tidak mengirim judul atau jumlah penonton di endpoint ini (yang dikenal skrip lama hanya status live dan ID ruangan), jadi kartu live Bigo memakai judul umum dan tanpa penonton.
+- ID Bigo yang tidak ada belum bisa dibedakan dari akun yang offline.
+- Interval default Bigo 180 detik, sama seperti cron skrip lama.
+- Tautan profil bawaan `https://www.bigo.tv/user/<id>` belum diverifikasi. Jika salah, ubah URL profil akunnya lewat tombol Edit.
+- `BIGO_CHECKER=dummy` mengembalikan Bigo ke data contoh.
+- Database lama otomatis dilengkapi pengaturan Bigo saat server dijalankan.
