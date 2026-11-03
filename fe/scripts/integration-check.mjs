@@ -27,7 +27,7 @@ globalThis.fetch = async (url, options = {}) => {
   return response
 }
 
-const server = spawn('node', ['src/index.js'], { cwd: path.resolve('..', 'server'), env: { ...process.env, PORT: String(port), DB_FILE: dbFile, TIKTOK_CHECKER: 'dummy', TWITCH_CHECKER: 'dummy', YOUTUBE_CHECKER: 'dummy', ADMIN_USERNAME: 'admin', ADMIN_PASSWORD_HASH: await hashPassword(PASSWORD) }, stdio: 'ignore' })
+const server = spawn('node', ['src/index.js'], { cwd: path.resolve('..', 'server'), env: { ...process.env, PORT: String(port), DB_FILE: dbFile, TIKTOK_CHECKER: 'dummy', TWITCH_CHECKER: 'dummy', YOUTUBE_CHECKER: 'dummy', BIGO_CHECKER: 'dummy', ADMIN_USERNAME: 'admin', ADMIN_PASSWORD_HASH: await hashPassword(PASSWORD) }, stdio: 'ignore' })
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 for (let i = 0; i < 30; i += 1) {
   try {
@@ -78,7 +78,7 @@ await test('hydrate memuat akun, runtime, platform, dan konfigurasi dari server'
   assert.equal(S().connection, 'online')
   assert.equal(S().accounts.length, 10)
   assert.equal(Object.keys(S().runtime).length, 10)
-  assert.equal(Object.keys(S().platformRuntime).length, 5)
+  assert.equal(Object.keys(S().platformRuntime).length, 6)
   assert.equal(S().config.platforms.tiktok.checkIntervalSeconds, 30)
 })
 

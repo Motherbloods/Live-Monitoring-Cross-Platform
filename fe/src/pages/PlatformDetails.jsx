@@ -64,7 +64,7 @@ export default function PlatformDetails() {
         </div>
       </header>
 
-      {API_MODE === 'http' && engine[platformId] === 'real' && integrations[platformId]?.configured === false && <p className="note">Kredensial {platform.short} belum diisi di server (lihat server/.env). Pemeriksaan akan gagal sampai diisi.</p>}
+      {API_MODE === 'http' && engine[platformId] === 'real' && integrations[platformId]?.configured === false && <p className="note">{platformId === 'bigo' ? 'File sesi login Bigo tidak ditemukan atau tidak valid di server (lihat README server).' : `Kredensial ${platform.short} belum diisi di server (lihat server/.env).`} Pemeriksaan akan gagal sampai diperbaiki.</p>}
       {!pc.serviceEnabled && <p className="note">Service dinonaktifkan. Akun dan konfigurasi tetap tersimpan, tetapi tidak diperiksa dan statusnya ditampilkan Unknown.</p>}
       {pc.serviceEnabled && rt.status === 'offline' && <p className="note">Service offline. Status akun platform ini tidak bisa diperbarui dan ditampilkan Unknown, bukan Offline.</p>}
 
