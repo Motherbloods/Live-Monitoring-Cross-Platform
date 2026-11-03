@@ -8,7 +8,8 @@
     "dev": "node --watch src/index.js",
     "hash-password": "node scripts/hash-password.js",
     "test": "node --test test/*.test.mjs",
-    "try-tiktok": "node scripts/try-tiktok.js"
+    "try-tiktok": "node scripts/try-tiktok.js",
+    "try-twitch": "node scripts/try-twitch.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
