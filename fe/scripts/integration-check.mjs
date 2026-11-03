@@ -155,6 +155,13 @@ await test('hapus akun menjaga riwayat live', async () => {
   assert.ok(S().history.length >= historyBefore)
 })
 
+await test('Telegram belum dikonfigurasi: status terbaca dan tes notifikasi ditolak dengan pesan jelas', async () => {
+  assert.equal(S().integrations.telegram.configured, false)
+  await S().sendTestNotification()
+  const last = S().toasts[S().toasts.length - 1]
+  assert.match(last.message, /belum dikonfigurasi/)
+})
+
 await test('log dan aktivitas berasal dari server', () => {
   assert.ok(S().logs.length > 0)
   assert.ok(S().activities.length > 0)

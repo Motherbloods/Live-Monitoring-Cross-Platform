@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Send } from 'lucide-react'
+import { API_MODE } from '../../api/client.js'
 import { NOTIFICATION_EVENTS, PLATFORMS } from '../../config/defaults.js'
 import { useAppStore } from '../../store/appStore.js'
 import Switch from '../common/Switch.jsx'
 import TriSelect from '../common/TriSelect.jsx'
 import NotificationPreview from './NotificationPreview.jsx'
+
+const EVENTS = NOTIFICATION_EVENTS.filter(([key]) => !key.startsWith('recording'))
 
 const snapshot = (config) => ({
   defaults: config.global.notificationDefaults,
@@ -12,7 +15,8 @@ const snapshot = (config) => ({
 })
 
 export default function NotificationSettingsForm() {
-  const { config, saveConfigSection, sendTestNotification } = useAppStore()
+  const { config, integrations, saveConfigSection, sendTestNotification } = useAppStore()
+  const telegramReady = API_MODE !== 'http' || integrations.telegram?.configured
   const initial = useMemo(() => snapshot(config), [config])
   const [form, setForm] = useState(initial)
   const [platformId, setPlatformId] = useState('tiktok')
@@ -55,7 +59,7 @@ export default function NotificationSettingsForm() {
         <section className="section">
           <div className="section-head"><h3>Preferensi global</h3>{dirty && <span className="dirty">Belum disimpan</span>}</div>
           <div className="toggles toggles-one">
-            {NOTIFICATION_EVENTS.map(([key, label]) => (
+            {EVENTS.map(([key, label]) => (
               <div key={key} className={key !== 'enabled' && !form.defaults.enabled ? 'is-dim' : ''}>
                 <span>{label}</span>
                 <Switch checked={form.defaults[key]} disabled={key !== 'enabled' && !form.defaults.enabled} label={label} onChange={(v) => setForm((f) => ({ ...f, defaults: { ...f.defaults, [key]: v } }))} />
@@ -72,7 +76,7 @@ export default function NotificationSettingsForm() {
             </select>
           </div>
           <ul className="mini-list">
-            {NOTIFICATION_EVENTS.map(([key, label]) => (
+            {EVENTS.map(([key, label]) => (
               <li key={key}><span>{label}</span><TriSelect value={ov[key]} label={`${label} untuk ${platformId}`} onChange={(v) => setOverride(key, v)} /></li>
             ))}
           </ul>
@@ -89,14 +93,16 @@ export default function NotificationSettingsForm() {
         <div className="section-head"><h3>Preview</h3></div>
         <div className="filters">
           <select value={event} onChange={(e) => setEvent(e.target.value)} aria-label="Jenis notifikasi">
-            {NOTIFICATION_EVENTS.filter(([k]) => k !== 'enabled').map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            {EVENTS.filter(([k]) => k !== 'enabled').map(([k, l]) => <option key={k} value={k}>{l}</option>)}
           </select>
         </div>
         <NotificationPreview platformId={platformId} event={event} />
-        <button className="btn" onClick={test} disabled={testing} style={{ marginTop: 14 }}>
+        <button className="btn" onClick={test} disabled={testing || !telegramReady} style={{ marginTop: 14 }}>
           <Send size={15} aria-hidden /> {testing ? 'Mengirim…' : 'Test notification'}
         </button>
-        <p className="note" style={{ marginTop: 12 }}>Token Telegram tidak disimpan di frontend. Saat backend tersedia, token dikelola di sisi server.</p>
+        <p className="note" style={{ marginTop: 12 }}>
+          {API_MODE !== 'http' ? 'Mode dummy: tidak ada pesan nyata yang dikirim.' : telegramReady ? 'Telegram terhubung di server. Token tidak pernah dikirim ke browser.' : 'Telegram belum dikonfigurasi di server. Isi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID di server/.env.'}
+        </p>
       </section>
     </div>
   )
