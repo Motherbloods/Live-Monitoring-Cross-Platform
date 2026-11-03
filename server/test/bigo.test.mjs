@@ -11,21 +11,22 @@ process.env.SEED_DEMO = 'false'
 process.env.BIGO_SESSION_FILE = sessionFile
 process.env.BIGO_CHECKER = 'real'
 
-const { bigoChecker, resetBigoCache, bigoSessionAvailable } = await import('../src/services/bigo.js')
+const { bigoChecker, resetBigoCache, bigoSessionAvailable, setBigoFetcher } = await import('../src/services/bigo.js')
 const { loadState, getState } = await import('../src/store/db.js')
 const { checkAccount } = await import('../src/services/monitor.js')
 const { validateAccountInput, defaultProfileUrl } = await import('../src/config/validation.js')
 
 const realFetch = globalThis.fetch
+globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({}) })
 let calls = []
-let reply = () => ({ ok: true, status: 200, json: async () => ({ data: { alive: 0 } }) })
-globalThis.fetch = async (url, options) => {
-  calls.push({ url: String(url), options })
+let reply = () => ({ status: 200, body: { data: { alive: 0 } } })
+setBigoFetcher(async (username, cookies) => {
+  calls.push({ username, cookies })
   return reply()
-}
+})
 
 const writeSession = (cookies) => fs.writeFileSync(sessionFile, JSON.stringify({ cookies }))
-const info = (data, status = 200) => () => ({ ok: status === 200, status, json: async () => ({ data }) })
+const info = (data, status = 200) => () => ({ status, body: { data } })
 const acc = (username = 'airah05') => ({ username })
 const setup = () => {
   calls = []
@@ -34,7 +35,7 @@ const setup = () => {
   reply = info({ alive: 0 })
 }
 
-test('live terdeteksi: permintaan memakai form, referer, dan hanya cookie Bigo', async () => {
+test('live terdeteksi: halaman Bigo dibuka lewat browser dengan hanya cookie Bigo', async () => {
   setup()
   reply = info({ alive: 1, roomId: '777' })
   const r = await bigoChecker(acc(), null)
@@ -42,12 +43,28 @@ test('live terdeteksi: permintaan memakai form, referer, dan hanya cookie Bigo',
   assert.equal(r.live.roomId, '777')
   assert.equal(r.live.simulated, false)
   const call = calls[0]
-  assert.equal(call.url, 'https://ta.bigo.tv/official_website/studio/getInternalStudioInfo')
-  assert.equal(call.options.method, 'POST')
-  assert.equal(call.options.headers.Referer, 'https://www.bigo.tv/')
-  assert.equal(call.options.headers.Cookie, 'sid=rahasia-sid-123; lang=id')
-  assert.match(String(call.options.body), /siteId=airah05/)
-  assert.match(String(call.options.body), /isEncrypt=0/)
+  assert.equal(call.username, 'airah05')
+  assert.deepEqual(call.cookies.map((c) => `${c.name}=${c.value}`), ['sid=rahasia-sid-123', 'lang=id'])
+  assert.deepEqual(call.cookies.map((c) => c.domain), ['.bigo.tv', 'www.bigo.tv'])
+})
+
+test('cookie dari berbagai format diubah ke format browser', async () => {
+  setup()
+  writeSession([
+    { name: 'a', value: '1', domain: '.bigo.tv', path: '/x', expires: 1893456000, httpOnly: true, secure: true, sameSite: 'Lax' },
+    { name: 'b', value: '2', domain: '.bigo.tv', expirationDate: 1893456000, sameSite: 'no_restriction' },
+    { name: 'c', value: '3', sameSite: 'unspecified' }
+  ])
+  resetBigoCache()
+  await bigoChecker(acc(), null)
+  const [a, b, c] = calls[0].cookies
+  assert.deepEqual(a, { name: 'a', value: '1', domain: '.bigo.tv', path: '/x', expires: 1893456000, httpOnly: true, secure: true, sameSite: 'Lax' })
+  assert.equal(b.expires, 1893456000)
+  assert.equal(b.sameSite, 'None')
+  assert.equal(b.secure, true)
+  assert.equal(c.domain, '.bigo.tv')
+  assert.equal(c.path, '/')
+  assert.equal(c.sameSite, undefined)
 })
 
 test('alive bukan 1 dianggap offline', async () => {
@@ -82,11 +99,11 @@ test('file sesi hilang, rusak, kosong, atau berisi cookie berbahaya ditolak tanp
 test('sesi dibaca ulang otomatis saat file diganti', async () => {
   setup()
   await bigoChecker(acc(), null)
-  assert.match(calls[0].options.headers.Cookie, /rahasia-sid-123/)
+  assert.equal(calls[0].cookies.find((c) => c.name === 'sid').value, 'rahasia-sid-123')
   writeSession([{ name: 'sid', value: 'sesi-baru-456', domain: '.bigo.tv' }])
   fs.utimesSync(sessionFile, new Date(), new Date(Date.now() + 5000))
   await bigoChecker(acc(), null)
-  assert.equal(calls[1].options.headers.Cookie, 'sid=sesi-baru-456')
+  assert.equal(calls[1].cookies.find((c) => c.name === 'sid').value, 'sesi-baru-456')
 })
 
 test('respons aneh dan HTTP error menjadi kegagalan; username tidak valid ditolak', async () => {
@@ -98,6 +115,22 @@ test('respons aneh dan HTTP error menjadi kegagalan; username tidak valid ditola
   const before = calls.length
   await assert.rejects(() => bigoChecker(acc('a b/../'), null), /tidak valid/)
   assert.equal(calls.length, before)
+})
+
+test('kegagalan browser: timeout, Chromium belum terpasang, dan error lain dipetakan ke pesan yang jelas', async () => {
+  setup()
+  reply = () => {
+    throw Object.assign(new Error('Timeout 25000ms exceeded.'), { name: 'TimeoutError' })
+  }
+  await assert.rejects(() => bigoChecker(acc(), null), /tidak merespons \(timeout\)/)
+  reply = () => {
+    throw new Error('Chromium belum terpasang. Jalankan "npx playwright install chromium".')
+  }
+  await assert.rejects(() => bigoChecker(acc(), null), /Chromium belum terpasang/)
+  reply = () => {
+    throw new Error('net::ERR_CONNECTION_RESET di https://www.bigo.tv/airah05')
+  }
+  await assert.rejects(() => bigoChecker(acc(), null), (e) => e.message === 'Tidak dapat menghubungi Bigo.')
 })
 
 test('validasi akun Bigo dan URL profil bawaan', () => {

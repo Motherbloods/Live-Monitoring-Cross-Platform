@@ -1,16 +1,31 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { fetchPageResponse } from './browser.js'
 
-const URL_STUDIO = 'https://ta.bigo.tv/official_website/studio/getInternalStudioInfo'
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 const USERNAME = /^[A-Za-z0-9_]{2,40}$/
 const COOKIE_NAME = /^[\w!#$%&'*+.^`|~-]+$/
 
 const sessionPath = () => path.resolve(process.env.BIGO_SESSION_FILE || 'data/bigo-session.json')
 
-let cache = { path: '', mtimeMs: 0, header: '' }
+let cache = { path: '', mtimeMs: 0, cookies: [] }
 
-const loadCookieHeader = () => {
+const toBrowserCookie = (c) => {
+  const cookie = { name: c.name, value: c.value, domain: c.domain || '.bigo.tv', path: c.path || '/' }
+  const expires = c.expires ?? c.expirationDate
+  if (typeof expires === 'number' && expires > 0) cookie.expires = expires
+  if (typeof c.httpOnly === 'boolean') cookie.httpOnly = c.httpOnly
+  if (typeof c.secure === 'boolean') cookie.secure = c.secure
+  const sameSite = String(c.sameSite || '').toLowerCase()
+  if (sameSite === 'strict') cookie.sameSite = 'Strict'
+  else if (sameSite === 'lax') cookie.sameSite = 'Lax'
+  else if (sameSite === 'none' || sameSite === 'no_restriction') {
+    cookie.sameSite = 'None'
+    cookie.secure = true
+  }
+  return cookie
+}
+
+const loadCookies = () => {
   const file = sessionPath()
   let stat
   try {
@@ -18,7 +33,7 @@ const loadCookieHeader = () => {
   } catch {
     throw new Error('File sesi Bigo tidak ditemukan. Salin bigo-session.json ke server (lihat BIGO_SESSION_FILE di .env).')
   }
-  if (cache.path === file && cache.mtimeMs === stat.mtimeMs) return cache.header
+  if (cache.path === file && cache.mtimeMs === stat.mtimeMs) return cache.cookies
   let parsed
   try {
     parsed = JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -29,13 +44,13 @@ const loadCookieHeader = () => {
   if (!cookies.length) throw new Error('File sesi Bigo tidak berisi cookie Bigo.')
   const valid = cookies.every((c) => COOKIE_NAME.test(String(c.name || '')) && typeof c.value === 'string' && !/[\r\n;]/.test(c.value))
   if (!valid) throw new Error('File sesi Bigo berisi cookie yang tidak valid.')
-  cache = { path: file, mtimeMs: stat.mtimeMs, header: cookies.map((c) => `${c.name}=${c.value}`).join('; ') }
-  return cache.header
+  cache = { path: file, mtimeMs: stat.mtimeMs, cookies: cookies.map(toBrowserCookie) }
+  return cache.cookies
 }
 
 export const bigoSessionAvailable = () => {
   try {
-    loadCookieHeader()
+    loadCookies()
     return true
   } catch {
     return false
@@ -43,36 +58,28 @@ export const bigoSessionAvailable = () => {
 }
 
 export const resetBigoCache = () => {
-  cache = { path: '', mtimeMs: 0, header: '' }
+  cache = { path: '', mtimeMs: 0, cookies: [] }
+}
+
+let studioFetcher = (username, cookies) => fetchPageResponse(`https://www.bigo.tv/${username}`, { urlIncludes: 'getInternalStudioInfo', cookies })
+
+export const setBigoFetcher = (fn) => {
+  studioFetcher = fn
 }
 
 export const fetchBigoInfo = async (username) => {
   if (!USERNAME.test(String(username || ''))) throw new Error('Username Bigo tidak valid (2-40 karakter: huruf, angka, garis bawah).')
-  const cookie = loadCookieHeader()
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 12000)
-  let response
+  const cookies = loadCookies()
+  let result
   try {
-    response = await fetch(URL_STUDIO, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        Referer: 'https://www.bigo.tv/',
-        Accept: 'application/json, text/plain, */*',
-        'User-Agent': USER_AGENT,
-        Cookie: cookie
-      },
-      body: new URLSearchParams({ verify: '', isEncrypt: '0', siteId: username, mk: '', token: '', supportHevc: '0' }),
-      signal: controller.signal
-    })
+    result = await studioFetcher(username, cookies)
   } catch (error) {
-    throw new Error(error.name === 'AbortError' ? 'Bigo tidak merespons (timeout).' : 'Tidak dapat menghubungi Bigo.')
-  } finally {
-    clearTimeout(timer)
+    if (error?.name === 'TimeoutError') throw new Error('Bigo tidak merespons (timeout).')
+    if (/belum terpasang/.test(String(error?.message))) throw error
+    throw new Error('Tidak dapat menghubungi Bigo.')
   }
-  if (!response.ok) throw new Error(`Bigo menjawab HTTP ${response.status}.`)
-  const body = await response.json().catch(() => null)
-  const info = body?.data
+  if (result?.status && (result.status < 200 || result.status >= 300)) throw new Error(`Bigo menjawab HTTP ${result.status}.`)
+  const info = result?.body?.data
   if (!info || typeof info !== 'object') throw new Error('Respons Bigo tidak dikenali (kemungkinan Bigo mengubah sistemnya).')
   return info
 }

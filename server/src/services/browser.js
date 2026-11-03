@@ -47,6 +47,38 @@ export const fetchPageHtml = async (url, { selector, selectorTimeoutMs = 8000, g
   }
 }
 
+export const fetchPageResponse = async (url, { urlIncludes, method = 'POST', cookies = [], gotoTimeoutMs = 25000, responseTimeoutMs = 25000 }) => {
+  const instance = await getBrowser()
+  contexts += 1
+  const context = await instance.newContext({ userAgent: USER_AGENT })
+  try {
+    if (cookies.length) {
+      try {
+        await context.addCookies(cookies)
+      } catch {}
+    }
+    const page = await context.newPage()
+    const waiting = page.waitForResponse((response) => response.url().includes(urlIncludes) && response.request().method() === method, { timeout: responseTimeoutMs })
+    waiting.catch(() => {})
+    let navigationError = null
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: gotoTimeoutMs })
+    } catch (error) {
+      navigationError = error
+    }
+    let response
+    try {
+      response = await waiting
+    } catch (error) {
+      throw navigationError || error
+    }
+    const body = await response.json().catch(() => null)
+    return { status: response.status(), body }
+  } finally {
+    await context.close()
+  }
+}
+
 export const closeBrowser = async () => {
   if (!browser) return
   try {

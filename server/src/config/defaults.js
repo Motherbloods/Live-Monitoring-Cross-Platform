@@ -54,6 +54,6 @@ export const DEFAULT_CONFIG = {
     youtube: platformDefaults(null),
     instagram: platformDefaults(120),
     twitch: platformDefaults(null),
-    bigo: platformDefaults(180)
+    bigo: { ...platformDefaults(180), requestTimeoutMs: 45000 }
   }
 }
