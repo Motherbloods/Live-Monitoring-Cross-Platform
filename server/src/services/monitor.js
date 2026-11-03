@@ -1,5 +1,6 @@
 import { addLog, getState, persist } from '../store/db.js'
 import { checkers } from './checkers.js'
+import { notifyLiveEnd, notifyLiveStart, notifyServiceFailed, notifyServiceRecovered } from './notifier.js'
 import { getEligibility, resolveEffective } from '../utils/effectiveConfig.js'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -63,19 +64,25 @@ export const checkAccount = async (account, { retry = true } = {}) => {
   runningByPlatform[account.platformId] -= 1
   dueAt.set(account.id, Date.now() + eff.checkIntervalSeconds * 1000)
 
+  const platformBefore = platform.status
+
   if (result) {
     const before = runtime.lastStatus
+    const previousLive = runtime.live
     syncHistory(account, before, result)
     Object.assign(runtime, { lastStatus: result.status, live: result.live, lastChecked: now, lastSuccess: now, lastError: null })
     failStreak[account.platformId] = 0
     if (platform.status !== 'online' && platform.status !== 'starting') {
       platform.status = 'online'
       addLog(account.platformId, 'INFO', 'Service pulih')
+      if (platformBefore === 'offline') notifyServiceRecovered(account.platformId)
     }
     Object.assign(platform, { lastSuccess: now, lastError: null, retryCount: 0 })
     if (before !== result.status && (before === 'live' || result.status === 'live')) {
       addLog(account.platformId, 'INFO', `${account.displayName} ${result.status === 'live' ? 'terdeteksi live' : 'selesai live'}`)
     }
+    if (before !== 'live' && result.status === 'live') notifyLiveStart(account, result.live)
+    if (before === 'live' && result.status !== 'live') notifyLiveEnd(account, previousLive?.startedAt)
   } else {
     runtime.lastChecked = now
     runtime.lastError = error.message
@@ -84,6 +91,7 @@ export const checkAccount = async (account, { retry = true } = {}) => {
     platform.lastError = error.message
     platform.status = failStreak[account.platformId] >= 3 ? 'offline' : 'degraded'
     addLog(account.platformId, platform.status === 'offline' ? 'ERROR' : 'WARN', `Pemeriksaan ${account.displayName} gagal: ${error.message}`)
+    if (platform.status === 'offline' && platformBefore !== 'offline') notifyServiceFailed(account.platformId, error.message)
   }
   persist()
   return { id: account.id, ok: Boolean(result), error: error?.message || null }
